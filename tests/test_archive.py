@@ -13,7 +13,7 @@ def test_archive():
     output_path.mkdir(parents=True, exist_ok=True)
 
     # archive
-    archive = ArchiveMerfishExperiment(raw_path, output_path)
+    archive = ArchiveMerfishExperiment("tests/test_data")
     archive.prepare_archive()
     assert not raw_path.exists()
     assert pathlib.Path("tests/test_data/raw.tar.gz").exists()

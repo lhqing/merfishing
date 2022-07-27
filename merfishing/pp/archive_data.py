@@ -10,7 +10,7 @@ from tifffile import imread
 
 
 def _tif_to_zarr(tif_path, chunk_size=25000):
-    img = imread(tif_path)
+    img = imread(str(tif_path))
     da = xr.DataArray(img).expand_dims("z")
     da.encoding["chunks"] = (1, chunk_size, chunk_size)
 
@@ -37,9 +37,17 @@ def _tar_dir(dir_path):
 class ArchiveMerfishExperiment:
     """Archive MERFISH raw and output directories."""
 
-    def __init__(self, raw_path, output_path):
-        self.raw_path = str(raw_path)
-        self.output_path = str(output_path)
+    def __init__(self, experiment_dir):
+        experiment_dir = pathlib.Path(experiment_dir).absolute()
+        assert experiment_dir.exists(), f"{experiment_dir} does not exist"
+
+        self.raw_path = experiment_dir / "raw"
+        assert self.raw_path.exists(), f"{self.raw_path} does not exist, please put the raw data in this directory"
+
+        self.output_path = experiment_dir / "output"
+        assert self.output_path.exists(), (
+            f"{self.output_path} does not exist, " f"please put the output directory in this directory"
+        )
         return
 
     def prepare_archive(self):
