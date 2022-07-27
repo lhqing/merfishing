@@ -22,7 +22,7 @@ version = "0.0.2"
 requires-python = ">=3.8"
 license = {file = "LICENSE"}
 readme = "README.md"
-dependencies = ["anndata"]
+dependencies = ["anndata", "zarr", "tifffile"]
 
 [project.optional-dependencies]
 dev = [
