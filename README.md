@@ -54,3 +54,22 @@ If you found a bug, please use the [issue tracker][issue-tracker].
 [changelog]: https://merfishing.readthedocs.io/latest/changelog.html
 [link-docs]: https://merfishing.readthedocs.io
 [link-api]: https://merfishing.readthedocs.io/latest/api.html
+
+## TODO list
+
+### User steps
+
+1. copy the merfish_raw (Tbs) and merfish_output (100Gbs - 1Tb) to network file system
+2. run yap merfish preprocessing
+3. send tar.gz path to Joe Nery for tape archive
+
+### YAP merfish processing
+
+-   raw
+    1.  tar.gz the raw files
+    1.  tar.gz the output files
+    1.  delete raw files once tar.gz successfully
+-   output
+    1.  Save all TIFF images into zarr dataset, this reduce the file size by three folds
+    2.  if there is smFISH images, do the spot detection with big-fish package automated pipeline
+    3.  delete original TIFF files

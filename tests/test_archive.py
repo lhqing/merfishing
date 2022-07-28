@@ -15,12 +15,9 @@ def test_archive():
     # archive
     archive = ArchiveMerfishExperiment("tests/test_data")
     archive.prepare_archive()
-    assert not raw_path.exists()
-    assert pathlib.Path("tests/test_data/raw.tar.gz").exists()
-    assert pathlib.Path("tests/test_data/output.tar.gz").exists()
+    assert pathlib.Path("tests/test_data/test_data.tar.gz").exists()
 
     # cleanup test file
-    shutil.rmtree(output_path)
-    os.remove(str(output_path) + ".tar.gz")
-    os.remove(str(raw_path) + ".tar.gz")
+    shutil.rmtree("tests/test_data/output")
+    os.unlink("tests/test_data/test_data.tar.gz")
     return

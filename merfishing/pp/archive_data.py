@@ -1,17 +1,18 @@
-import os
 import pathlib
 import re
 import shutil
-import tarfile
+import subprocess
 from collections import defaultdict
 
 import xarray as xr
 from tifffile import imread
 
 
-def _tif_to_zarr(tif_path, chunk_size=25000):
+def _tif_to_zarr(tif_path, chunk_size=10000):
     img = imread(str(tif_path))
-    da = xr.DataArray(img).expand_dims("z")
+    # tiff image is (y, x), append dims add z in the first dim
+    # so the da dim is (z, y, x)
+    da = xr.DataArray(img, dims=["y", "x"]).expand_dims("z")
     da.encoding["chunks"] = (1, chunk_size, chunk_size)
 
     tif_path = pathlib.Path(tif_path)
@@ -26,11 +27,19 @@ def _tif_to_zarr(tif_path, chunk_size=25000):
     return
 
 
-def _tar_dir(dir_path):
-    dir_path = str(dir_path)
-    tar_path = dir_path + ".tar.gz"
-    with tarfile.open(tar_path, "w:gz") as tar:
-        tar.add(dir_path, arcname=os.path.basename(dir_path))
+def _tar_dir(dir_paths, tar_path, cpus):
+    dir_paths = " ".join(map(str, dir_paths))
+    try:
+        subprocess.run(
+            f"tar -c {dir_paths} | pigz -p {cpus} > {tar_path}",
+            shell=True,
+            check=True,
+            capture_output=True,
+        )
+    except subprocess.CalledProcessError as e:
+        print(e.stdout.decode())
+        print(e.stderr.decode())
+        raise e
     return tar_path
 
 
@@ -40,6 +49,8 @@ class ArchiveMerfishExperiment:
     def __init__(self, experiment_dir):
         experiment_dir = pathlib.Path(experiment_dir).absolute()
         assert experiment_dir.exists(), f"{experiment_dir} does not exist"
+        self.experiment_dir = experiment_dir
+        self.experiment_name = experiment_dir.name
 
         self.raw_path = experiment_dir / "raw"
         assert self.raw_path.exists(), f"{self.raw_path} does not exist, please put the raw data in this directory"
@@ -50,13 +61,7 @@ class ArchiveMerfishExperiment:
         )
         return
 
-    def prepare_archive(self):
-        """Prepare the archive."""
-        tar_path = _tar_dir(self.raw_path)
-        print(f"Archive Raw Data: {tar_path}")
-        tar_path = _tar_dir(self.output_path)
-        print(f"Archive Output Data: {tar_path}")
-
+    def _convert_tif_to_zarr(self):
         # turn all image TIF files into zarr files
         p = re.compile(r"\S+_(?P<name>\S+)_z(?P<zorder>\d+).tif")
 
@@ -74,10 +79,20 @@ class ArchiveMerfishExperiment:
                 _tif_to_zarr(path)
                 path.unlink()  # delete after successful conversion
 
+    def prepare_archive(self, cpus=20):
+        """Prepare the archive."""
+        tar_path = self.experiment_dir / f"{self.experiment_name}.tar.gz"
+        _tar_dir([self.raw_path, self.output_path], tar_path, cpus)
+        print(f"Archive Raw and Output Data: {tar_path}")
+
+        self._convert_tif_to_zarr()
+
         self._delete_raw_dir()
         return
 
     def _delete_raw_dir(self):
         """Delete the raw path directory and files inside."""
-        shutil.rmtree(self.raw_path)
+        shutil.rmtree(self.raw_path / "data")
+        shutil.rmtree(self.raw_path / "low_resolution")
+        shutil.rmtree(self.raw_path / "seg_preview")
         return
