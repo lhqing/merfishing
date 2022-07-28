@@ -38,10 +38,23 @@ def _tar_dir(dir_paths, tar_path):
             check=True,
             capture_output=True,
         )
-    except subprocess.CalledProcessError as e:
-        print(e.stdout.decode())
-        print(e.stderr.decode())
-        raise e
+    except subprocess.CalledProcessError:
+        try:
+            print("tar failed with pigz, trying gzip again...")
+            print(
+                'If pigz is not installed, please run "mamba install pigz" to install it. '
+                "It will be much faster than gzip."
+            )
+            subprocess.run(
+                f"tar -cf {tar_path} {dir_paths}",
+                shell=True,
+                check=True,
+                capture_output=True,
+            )
+        except subprocess.CalledProcessError as e:
+            print(e.stdout.decode())
+            print(e.stderr.decode())
+            raise e
     return tar_path
 
 
@@ -61,6 +74,9 @@ class ArchiveMerfishExperiment:
         assert self.output_path.exists(), (
             f"{self.output_path} does not exist, " f"please put the output directory in this directory"
         )
+
+        # execute the archive process
+        self.prepare_archive()
         return
 
     def _convert_tif_to_zarr(self):
@@ -113,9 +129,9 @@ class ArchiveMerfishExperiment:
 
     def _delete_raw_dir_data(self):
         """Delete the raw path directory and files inside."""
-        shutil.rmtree(self.raw_path / "data")
-        shutil.rmtree(self.raw_path / "low_resolution")
-        shutil.rmtree(self.raw_path / "seg_preview")
+        shutil.rmtree(self.raw_path / "data", ignore_errors=True)
+        shutil.rmtree(self.raw_path / "low_resolution", ignore_errors=True)
+        shutil.rmtree(self.raw_path / "seg_preview", ignore_errors=True)
         return
 
     def _compress_vizgen_output(self):

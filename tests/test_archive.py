@@ -18,6 +18,7 @@ def test_archive():
     assert pathlib.Path("tests/test_data/test_data.tar.gz").exists()
 
     # cleanup test file
+    shutil.rmtree("tests/test_data/raw")
     shutil.rmtree("tests/test_data/output")
     os.unlink("tests/test_data/test_data.tar.gz")
     return
