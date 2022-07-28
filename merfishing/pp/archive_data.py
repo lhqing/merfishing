@@ -29,11 +29,11 @@ def _tif_to_zarr(tif_path, chunk_size=10000):
     return
 
 
-def _tar_dir(dir_paths, tar_path, cpus):
+def _tar_dir(dir_paths, tar_path):
     dir_paths = " ".join(map(str, dir_paths))
     try:
         subprocess.run(
-            f"tar -c {dir_paths} | pigz -p {cpus} > {tar_path}",
+            f"tar -cf {tar_path} --use-compress-program=pigz {dir_paths}",
             shell=True,
             check=True,
             capture_output=True,
@@ -134,10 +134,10 @@ class ArchiveMerfishExperiment:
                 raise e
         return
 
-    def prepare_archive(self, cpus=20):
+    def prepare_archive(self):
         """Prepare the archive."""
         tar_path = self.experiment_dir / f"{self.experiment_name}.tar.gz"
-        _tar_dir([self.raw_path, self.output_path], tar_path, cpus)
+        _tar_dir([self.raw_path, self.output_path], tar_path)
         print(f"Archive Raw and Output Data: {tar_path}")
 
         self._convert_tif_to_zarr()

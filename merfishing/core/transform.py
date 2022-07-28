@@ -1,3 +1,22 @@
+"""
+Dealing with merfish data coordinates, convert between pixel and micron coordinates.
+
+The key information is recorded in the manifest file located in the region_dir/images/manifest.json.
+The micron_to_pixel_transform.csv file is located in the region_dir/images/micron_to_mosaic_pixel_transform.csv.
+The csv file can be calculated from the manifest file.
+The equation is:
+
+# mosaicMicronsPerPixel = 0.1083333 # by default
+# s = 1 / mosaicMicronsPerPixel
+#
+# micron_to_pixel_mat = np.float32(
+#     [[s*1,   0,     -s*micronExtents[0]],
+#      [0,     s*1,   -s*micronExtents[1]],
+#      [0,     0,     1                 ]]
+# )
+# pixel_to_micron_mat = cv2.invert(micron_to_pixel_mat)
+"""
+
 import cv2
 import numpy as np
 import pandas as pd

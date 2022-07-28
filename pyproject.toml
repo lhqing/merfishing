@@ -27,7 +27,8 @@ dependencies = [
     "zarr",
     "tifffile",
     "xarray",
-    "opencv-python"
+    "opencv-python",
+    "shapely",
 ]
 
 [project.optional-dependencies]

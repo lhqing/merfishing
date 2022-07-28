@@ -5,8 +5,9 @@ from typing import Union
 
 import numpy as np
 import pandas as pd
-import xarray as xr
 
+from .boundary import WatershedCellBoundary
+from .image import MerfishMosaicImage
 from .transform import MerfishTransform
 
 
@@ -38,6 +39,13 @@ class MerfishExperimentRegion:
         #  'end_x_micron', 'end_y_micron',
         #  'start_x_pixel', 'start_y_pixel',
         #  'end_x_pixel', 'end_y_pixel']
+
+        # watershed cell boundaries
+        cell_boundary_dir = region_dir / "cell_boundaries"
+        self._cell_boundary_hdf_paths = {
+            int(p.name.split(".")[0].split("_")[-1]): p for p in pathlib.Path(cell_boundary_dir).glob("*.hdf5")
+        }
+        # {fov int id: fov hdf5 path}
         return
 
     def _read_image_manifest(self):
@@ -136,20 +144,3 @@ class MerfishExperimentRegion:
         fov_tiles["end_x_pixel"] = np.round(fov_tiles["start_x_pixel"] + tile_width_pixel).astype(int)
         fov_tiles["end_y_pixel"] = np.round(fov_tiles["start_y_pixel"] + tile_height_pixel).astype(int)
         return fov_tiles
-
-
-class MerfishMosaicImage(xr.Dataset):
-    """Merfish mosaic image stored in zarr format."""
-
-    __slots__ = ()
-
-    def __init__(self, zarr_path):
-        ds = xr.open_zarr(zarr_path, mode="r")
-
-        super().__init__(data_vars=ds.data_vars, coords=ds.coords, attrs=ds.attrs)
-        return
-
-    @property
-    def image_name(self):
-        """Get image name."""
-        return list(self.data_vars.keys())[0]
