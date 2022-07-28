@@ -2,8 +2,10 @@ import pathlib
 import re
 import shutil
 import subprocess
+import warnings
 from collections import defaultdict
 
+import pandas as pd
 import xarray as xr
 from tifffile import imread
 
@@ -79,6 +81,59 @@ class ArchiveMerfishExperiment:
                 _tif_to_zarr(path)
                 path.unlink()  # delete after successful conversion
 
+    def _save_transcripts_to_hdf(self):
+        """Save transcripts to HDF5 file."""
+        for path in self.output_path.glob("*/detected_transcripts.txt"):
+            output_path = path.parent / "detected_transcripts.hdf5"
+            transcripts = pd.read_csv(
+                path,
+                index_col=0,
+                dtype={
+                    "barcode_id": "uint16",
+                    "global_x": "float32",
+                    "global_y": "float32",
+                    "global_z": "uint16",
+                    "x": "float32",
+                    "y": "float32",
+                    "fov": "uint16",
+                    "gene": "str",
+                    "transcript_id": "str",
+                },
+            ).sort_values("fov")
+
+            with pd.HDFStore(str(output_path), complevel=1, complib="blosc") as hdf:
+                for fov, fov_df in transcripts.groupby("fov"):
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore")
+                        hdf[str(fov)] = fov_df
+
+            # delete input path
+            path.unlink()
+        return
+
+    def _delete_raw_dir_data(self):
+        """Delete the raw path directory and files inside."""
+        shutil.rmtree(self.raw_path / "data")
+        shutil.rmtree(self.raw_path / "low_resolution")
+        shutil.rmtree(self.raw_path / "seg_preview")
+        return
+
+    def _compress_vizgen_output(self):
+        """Compress the vizgen default output csv files."""
+        for path in self.output_path.glob("*/*.csv"):
+            try:
+                subprocess.run(
+                    f"pigz {path}",
+                    shell=True,
+                    check=True,
+                    capture_output=True,
+                )
+            except subprocess.CalledProcessError as e:
+                print(e.stdout.decode())
+                print(e.stderr.decode())
+                raise e
+        return
+
     def prepare_archive(self, cpus=20):
         """Prepare the archive."""
         tar_path = self.experiment_dir / f"{self.experiment_name}.tar.gz"
@@ -86,13 +141,7 @@ class ArchiveMerfishExperiment:
         print(f"Archive Raw and Output Data: {tar_path}")
 
         self._convert_tif_to_zarr()
-
-        self._delete_raw_dir()
-        return
-
-    def _delete_raw_dir(self):
-        """Delete the raw path directory and files inside."""
-        shutil.rmtree(self.raw_path / "data")
-        shutil.rmtree(self.raw_path / "low_resolution")
-        shutil.rmtree(self.raw_path / "seg_preview")
+        self._save_transcripts_to_hdf()
+        self._compress_vizgen_output()
+        self._delete_raw_dir_data()
         return

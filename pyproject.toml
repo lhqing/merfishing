@@ -10,19 +10,25 @@ requires = [
 name = "merfishing"
 description = "Code for MERFISH analysis"
 authors = [
-    {name = "Hanqing Liu"},
+    { name = "Hanqing Liu" },
 ]
 maintainers = [
-    {name = "Hanqing Liu", email = "hanliu@salk.edu"},
+    { name = "Hanqing Liu", email = "hanliu@salk.edu" },
 ]
 urls.Documentation = "https://merfishing.readthedocs.io/"
 urls.Source = "https://github.com/lhqing/merfishing"
 urls.Home-page = "https://github.com/lhqing/merfishing"
 version = "0.0.3"
 requires-python = ">=3.8"
-license = {file = "LICENSE"}
+license = { file = "LICENSE" }
 readme = "README.md"
-dependencies = ["anndata", "zarr", "tifffile"]
+dependencies = [
+    "anndata",
+    "zarr",
+    "tifffile",
+    "xarray",
+    "opencv-python"
+]
 
 [project.optional-dependencies]
 dev = [
@@ -55,7 +61,7 @@ omit = [
 testpaths = ["tests"]
 xfail_strict = true
 addopts = [
-    "--import-mode=importlib",  # allow using test files with same name
+    "--import-mode=importlib", # allow using test files with same name
 ]
 
 [tool.isort]
