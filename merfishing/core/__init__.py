@@ -19,7 +19,7 @@ class MerfishExperimentRegion:
 
         # image coordinates transform
         # micron to pixel transform
-        self.micron_to_pixel_transform_path = region_dir / "images/micron_to_mosaic_pixel_transform.csv"
+        self.micron_to_pixel_transform_path = self.region_dir / "images/micron_to_mosaic_pixel_transform.csv"
         self.transform = MerfishTransform(self.micron_to_pixel_transform_path)
 
         # image manifest
@@ -27,7 +27,7 @@ class MerfishExperimentRegion:
 
         # image paths
         self._mosaic_image_zarr_paths = {
-            p.name.split(".")[0].split("_")[-1]: p for p in region_dir.glob("images/*.zarr")
+            p.name.split(".")[0].split("_")[-1]: p for p in self.region_dir.glob("images/*.zarr")
         }
         self._opened_images = {}
 
@@ -41,7 +41,7 @@ class MerfishExperimentRegion:
         #  'end_x_pixel', 'end_y_pixel']
 
         # watershed cell boundaries
-        cell_boundary_dir = region_dir / "cell_boundaries"
+        cell_boundary_dir = self.region_dir / "cell_boundaries"
         self._cell_boundary_hdf_paths = {
             int(p.name.split(".")[0].split("_")[-1]): p for p in pathlib.Path(cell_boundary_dir).glob("*.hdf5")
         }
@@ -54,11 +54,21 @@ class MerfishExperimentRegion:
         manifest = namedtuple("ImageManifest", manifest.keys())(*manifest.values())
         return manifest
 
+    @property
+    def image_names(self):
+        """Get image names."""
+        return list(self._mosaic_image_zarr_paths.keys())
+
+    @property
+    def smfish_genes(self):
+        """Get smfish genes."""
+        return [g for g in self._mosaic_image_zarr_paths.keys() if g not in ["DAPI", "PolyT"]]
+
     def get_fov_coords_pixel(self, fov):
         """Get fov coordinates in pixel."""
         xmin, xmax, ymin, ymax = self.fov_table.loc[
             fov, ["start_x_pixel", "end_x_pixel", "start_y_pixel", "end_y_pixel"]
-        ]
+        ].astype(int)
         return xmin, xmax, ymin, ymax
 
     def get_fov_coords_micron(self, fov):
@@ -70,6 +80,7 @@ class MerfishExperimentRegion:
 
     def get_image(self, name, fov: Union[str, int] = None, z: Union[int, slice] = None):
         """Get image by name, and select fov (optional) and z slice (optional)."""
+        # TODO coordinate system is not correct
         if name not in self._opened_images:
             try:
                 zarr_path = self._mosaic_image_zarr_paths[name]
@@ -85,9 +96,9 @@ class MerfishExperimentRegion:
 
         if fov is not None:
             xmin, xmax, ymin, ymax = self.get_fov_coords_pixel(fov)
-            values = img[z, ymin:ymax, xmin:xmax].values
+            values = img.load_image(z, slice(ymin, ymax), slice(xmin, xmax))
         else:
-            values = img[z, :, :].values
+            values = img.load_image(z, slice(None), slice(None))
         return values
 
     def _prepare_fov_table(self):
@@ -144,3 +155,12 @@ class MerfishExperimentRegion:
         fov_tiles["end_x_pixel"] = np.round(fov_tiles["start_x_pixel"] + tile_width_pixel).astype(int)
         fov_tiles["end_y_pixel"] = np.round(fov_tiles["start_y_pixel"] + tile_height_pixel).astype(int)
         return fov_tiles
+
+    def _call_spots_fov(self, image_name, fov, **spot_kwargs):
+        from ..tl.smfish import call_spot
+
+        image = self.get_image(image_name, fov)
+
+        spot, *_ = call_spot(image, **spot_kwargs)
+
+        return
