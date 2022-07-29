@@ -9,6 +9,8 @@ import pandas as pd
 import xarray as xr
 from tifffile import imread
 
+from .dataset import MerfishExperimentDirStructureMixin, MerfishRegionDirStructureMixin
+
 
 def _tif_to_zarr(tif_path, chunk_size=10000):
     img = imread(str(tif_path))
@@ -58,22 +60,11 @@ def _tar_dir(dir_paths, tar_path):
     return tar_path
 
 
-class ArchiveMerfishExperiment:
+class ArchiveMerfishRegion(MerfishRegionDirStructureMixin):
     """Archive MERFISH raw and output directories."""
 
-    def __init__(self, experiment_dir):
-        experiment_dir = pathlib.Path(experiment_dir).absolute()
-        assert experiment_dir.exists(), f"{experiment_dir} does not exist"
-        self.experiment_dir = experiment_dir
-        self.experiment_name = experiment_dir.name
-
-        self.raw_path = experiment_dir / "raw"
-        assert self.raw_path.exists(), f"{self.raw_path} does not exist, please put the raw data in this directory"
-
-        self.output_path = experiment_dir / "output"
-        assert self.output_path.exists(), (
-            f"{self.output_path} does not exist, " f"please put the output directory in this directory"
-        )
+    def __init__(self, region_dir):
+        super().__init__(region_dir)
 
         # execute the archive process
         self.prepare_archive()
@@ -85,7 +76,7 @@ class ArchiveMerfishExperiment:
 
         # get all tif files
         tif_dict = defaultdict(dict)
-        for tif_path in pathlib.Path(self.output_path).glob("**/*.tif"):
+        for tif_path in pathlib.Path(self.images_dir).glob("*.tif"):
             name_dict = p.match(tif_path.name).groupdict()
             zorder = int(name_dict["zorder"])
             name = name_dict["name"]
@@ -97,44 +88,9 @@ class ArchiveMerfishExperiment:
                 _tif_to_zarr(path)
                 path.unlink()  # delete after successful conversion
 
-    def _save_transcripts_to_hdf(self):
-        """Save transcripts to HDF5 file."""
-        for path in self.output_path.glob("*/detected_transcripts.csv"):
-            output_path = path.parent / "detected_transcripts.hdf5"
-            transcripts = pd.read_csv(
-                path,
-                index_col=0,
-                dtype={
-                    "barcode_id": "uint16",
-                    "global_x": "float32",
-                    "global_y": "float32",
-                    "global_z": "uint16",
-                    "x": "float32",
-                    "y": "float32",
-                    "fov": "uint16",
-                    "gene": "str",
-                    "transcript_id": "str",
-                },
-            ).sort_values("fov")
-
-            with pd.HDFStore(str(output_path), complevel=1, complib="blosc") as hdf:
-                for fov, fov_df in transcripts.groupby("fov"):
-                    with warnings.catch_warnings():
-                        warnings.simplefilter("ignore")
-                        hdf[str(fov)] = fov_df
-
-        return
-
-    def _delete_raw_dir_data(self):
-        """Delete the raw path directory and files inside."""
-        shutil.rmtree(self.raw_path / "data", ignore_errors=True)
-        shutil.rmtree(self.raw_path / "low_resolution", ignore_errors=True)
-        shutil.rmtree(self.raw_path / "seg_preview", ignore_errors=True)
-        return
-
     def _compress_vizgen_output(self):
         """Compress the vizgen default output csv files."""
-        for path in self.output_path.glob("*/*.csv"):
+        for path in self.region_dir.glob("*.csv"):
             try:
                 subprocess.run(
                     f"pigz {path}",
@@ -148,21 +104,72 @@ class ArchiveMerfishExperiment:
                 raise e
         return
 
-    def prepare_archive(self):
-        """Prepare the archive."""
-        tar_path = self.experiment_dir / f"{self.experiment_name}.tar.gz"
-        _tar_dir([self.raw_path, self.output_path], tar_path)
-        print(f"Archive Raw and Output Data: {tar_path}")
+    def _save_transcripts_to_hdf(self):
+        """Save transcripts to HDF5 file."""
+        output_path = self.transcripts_path
 
+        transcripts = pd.read_csv(
+            self.region_dir / "detected_transcripts.csv",
+            index_col=0,
+            dtype={
+                "barcode_id": "uint16",
+                "global_x": "float32",
+                "global_y": "float32",
+                "global_z": "uint16",
+                "x": "float32",
+                "y": "float32",
+                "fov": "uint16",
+                "gene": "str",
+                "transcript_id": "str",
+            },
+        ).sort_values("fov")
+
+        with pd.HDFStore(str(output_path), complevel=1, complib="blosc") as hdf:
+            for fov, fov_df in transcripts.groupby("fov"):
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    hdf[str(fov)] = fov_df
+        return
+
+    def prepare_archive(self):
+        """Prepare the region archive."""
         self._convert_tif_to_zarr()
-        print("Converted TIF files to Zarr")
+        print(f"{self.region_name}: Converted TIF files to Zarr")
 
         self._save_transcripts_to_hdf()
-        print("Saved transcripts to HDF5")
+        print(f"{self.region_name}: Saved transcripts to HDF5")
 
         self._compress_vizgen_output()
-        print("Compressed vizgen output")
+        print(f"{self.region_name}: Compressed vizgen output")
+        return
+
+
+class ArchiveMerfishExperiment(MerfishExperimentDirStructureMixin):
+    """Archive MERFISH raw and output directories."""
+
+    def __init__(self, experiment_dir):
+        super().__init__(experiment_dir)
+
+        # execute the archive process
+        self.prepare_archive()
+        return
+
+    def _delete_raw_dir_data(self):
+        """Delete the raw path directory and files inside."""
+        shutil.rmtree(self.raw_dir / "data", ignore_errors=True)
+        shutil.rmtree(self.raw_dir / "low_resolution", ignore_errors=True)
+        shutil.rmtree(self.raw_dir / "seg_preview", ignore_errors=True)
+        return
+
+    def prepare_archive(self):
+        """Prepare the experiment archive."""
+        tar_path = self.experiment_dir / f"{self.experiment_name}.tar.gz"
+        _tar_dir([self.raw_dir, self.output_dir], tar_path)
+        print(f"{self.experiment_name}: Archive Raw and Output Data: {tar_path}")
+
+        for region_dir in self.region_dirs:
+            ArchiveMerfishRegion(region_dir)
 
         self._delete_raw_dir_data()
-        print("Deleted raw data")
+        print(f"{self.experiment_name}: Deleted raw data")
         return

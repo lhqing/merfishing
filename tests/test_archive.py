@@ -2,7 +2,7 @@ import os
 import pathlib
 import shutil
 
-from merfishing.pp.archive_data import ArchiveMerfishExperiment
+from merfishing.core.archive_data import ArchiveMerfishExperiment
 
 
 def test_archive():

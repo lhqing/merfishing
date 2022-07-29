@@ -1,57 +1,30 @@
-import json
-import pathlib
-from collections import namedtuple
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
 from ..pl.plot_image import MerfishImageAxesPlotter
 from .boundary import WatershedCellBoundary
+from .dataset import MerfishRegionDirStructureMixin
 from .image import MerfishMosaicImage
 from .transform import MerfishTransform
 
 
-class MerfishExperimentRegion:
+class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
     """Entry point for one region of a MERFISH experiment."""
 
     def __init__(self, region_dir):
-        self.region_dir = pathlib.Path(region_dir).absolute()
+        # setup all the file paths and load experiment manifest information
+        super().__init__(region_dir)
 
-        # image coordinates transform
-        # micron to pixel transform
-        self.micron_to_pixel_transform_path = self.region_dir / "images/micron_to_mosaic_pixel_transform.csv"
+        # Transform image coords between micron and pixel
         self.transform = MerfishTransform(self.micron_to_pixel_transform_path)
 
-        # image manifest
-        self.image_manifest = self._read_image_manifest()
-
         # image paths
-        self._mosaic_image_zarr_paths = {
-            p.name.split(".")[0].split("_")[-1]: p for p in self.region_dir.glob("images/*.zarr")
-        }
         self._opened_images = {}
 
+        # cell metadata
         self._cell_metadata = None
-        self._cell_to_fov_map = None
-
-        # watershed cell segmentation
-        cell_boundary_dir = self.region_dir / "cell_boundaries"
-        # {fov int id: fov hdf5 path}
-        self._watershed_cell_boundary_hdf_paths = {
-            int(p.name.split(".")[0].split("_")[-1]): p for p in pathlib.Path(cell_boundary_dir).glob("*.hdf5")
-        }
-
-        # transcripts
-        self.transcripts_path = self.region_dir / "detected_transcripts.hdf5"
-
         return
-
-    def _read_image_manifest(self):
-        with open(self.region_dir / "images/manifest.json") as f:
-            manifest = json.load(f)
-        manifest = namedtuple("ImageManifest", manifest.keys())(*manifest.values())
-        return manifest
 
     @property
     def image_names(self):
@@ -62,6 +35,43 @@ class MerfishExperimentRegion:
     def smfish_genes(self):
         """Get smfish genes."""
         return [g for g in self._mosaic_image_zarr_paths.keys() if g not in ["DAPI", "PolyT"]]
+
+    # ==========================================================================
+    # Get information
+    # ==========================================================================
+
+    def get_cell_metadata(self, fov=None):
+        """Get cell metadata."""
+        if self._cell_metadata is None:
+            df = pd.read_csv(self.cell_metadata_path, index_col=0)
+            self._cell_metadata = df
+        df = self._cell_metadata
+
+        if fov is not None:
+            df = df.loc[df["fov"] == fov]
+        return df
+
+    def get_cell_boundaries(self, fov=None, cells=None):
+        """Get cell boundaries."""
+        if cells is None:
+            if fov is None:
+                raise ValueError("fov or cell must be specified")
+            df = self.get_cell_metadata(fov)
+            cells = df.index.to_list()
+
+        boundaries = {}
+        for cell in cells:
+            hdf_path = self._watershed_cell_boundary_hdf_paths[fov]
+            boundaries[cell] = WatershedCellBoundary(hdf_path=hdf_path, cell_id=cell)
+        return boundaries
+
+    def get_transcripts(self, fov):
+        """Get transcripts detected in the FOV."""
+        return pd.read_hdf(self.transcripts_path, key=str(fov))
+
+    # ==========================================================================
+    # Get mosaic image, deal with FOV coords and make plots
+    # ==========================================================================
 
     def get_image(self, name):
         """Get image by name, and select fov (optional) and z slice (optional)."""
@@ -77,6 +87,27 @@ class MerfishExperimentRegion:
         else:
             img = self._opened_images[name]
         return img
+
+    def get_fov_micron_extent_from_transcripts(self, fov):
+        """Get fov extent in micron coords from transcripts detected in the FOV."""
+        transcripts = self.get_transcripts(fov)
+        xmin, ymin = transcripts[["global_x", "global_y"]].min()
+        xmax, ymax = transcripts[["global_x", "global_y"]].max()
+        return xmin, ymin, xmax, ymax
+
+    def get_fov_pixel_extent_from_transcripts(self, fov, padding=0):
+        """Get fov extent in pixel coords from transcripts detected in the FOV."""
+        xmin, ymin, xmax, ymax = self.get_fov_micron_extent_from_transcripts(fov)
+        extent = np.array([[xmin, ymin], [xmax, ymax]])
+        pixel_extent = self.transform.micron_to_pixel_transform(extent)
+
+        x_max_pixel = self.image_manifest.mosaic_width_pixels
+        y_max_pixel = self.image_manifest.mosaic_height_pixels
+        xmin = max(0, int(pixel_extent[0, 0] - padding))
+        ymin = max(0, int(pixel_extent[0, 1] - padding))
+        xmax = min(x_max_pixel, int(pixel_extent[1, 0] + padding))
+        ymax = min(y_max_pixel, int(pixel_extent[1, 1] + padding))
+        return xmin, ymin, xmax, ymax
 
     def get_image_fov(self, name, fov, z=None, load=True, projection=None, padding=300, contrast=True):
         """
@@ -110,80 +141,6 @@ class MerfishExperimentRegion:
         if z is None:
             z = slice(None)
         return img.get_image(z, yslice, xslice, load=load, projection=projection, contrast=contrast)
-
-    def get_transcripts(self, fov):
-        """Get transcripts detected in the FOV."""
-        return pd.read_hdf(self.transcripts_path, key=str(fov))
-
-    def get_fov_micron_extent_from_transcripts(self, fov):
-        """Get fov extent in micron coords from transcripts detected in the FOV."""
-        transcripts = self.get_transcripts(fov)
-        xmin, ymin = transcripts[["global_x", "global_y"]].min()
-        xmax, ymax = transcripts[["global_x", "global_y"]].max()
-        return xmin, ymin, xmax, ymax
-
-    def get_fov_pixel_extent_from_transcripts(self, fov, padding=0):
-        """Get fov extent in pixel coords from transcripts detected in the FOV."""
-        xmin, ymin, xmax, ymax = self.get_fov_micron_extent_from_transcripts(fov)
-        extent = np.array([[xmin, ymin], [xmax, ymax]])
-        pixel_extent = self.transform.micron_to_pixel_transform(extent)
-
-        x_max_pixel = self.image_manifest.mosaic_width_pixels
-        y_max_pixel = self.image_manifest.mosaic_height_pixels
-        xmin = max(0, int(pixel_extent[0, 0] - padding))
-        ymin = max(0, int(pixel_extent[0, 1] - padding))
-        xmax = min(x_max_pixel, int(pixel_extent[1, 0] + padding))
-        ymax = min(y_max_pixel, int(pixel_extent[1, 1] + padding))
-        return xmin, ymin, xmax, ymax
-
-    def _call_spots_fov(self, image_name, fov, **spot_kwargs):
-        from ..tl.smfish import call_spot
-
-        image = self.get_image(image_name)
-
-        spot, *_ = call_spot(image, **spot_kwargs)
-        return
-
-    def _load_cell_boundaries(self):
-        path = self.region_dir / "cell_metadata.csv.gz"
-        if pathlib.Path(path).exists():
-            df = pd.read_csv(path, index_col=0)
-        else:
-            path = self.region_dir / "cell_metadata.csv"
-            if pathlib.Path(path).exists():
-                df = pd.read_csv(path, index_col=0)
-            else:
-                raise FileNotFoundError(f"{path} not found")
-        self._cell_metadata = df
-        self._cell_to_fov_map = df["fov"].to_dict()
-
-    def get_cell_metadata(self, fov=None, cell_segmentation="watershed"):
-        """Get cell metadata."""
-        # TODO add cell pose and use it as default
-        if cell_segmentation == "watershed":
-            if self._cell_metadata is None:
-                self._load_cell_boundaries()
-            df = self._cell_metadata
-        else:
-            raise NotImplementedError(f"{cell_segmentation} not implemented")
-
-        if fov is not None:
-            df = df.loc[df["fov"] == fov]
-        return df
-
-    def get_cell_boundaries(self, fov=None, cells=None):
-        """Get cell boundaries."""
-        if cells is None:
-            if fov is None:
-                raise ValueError("fov or cell must be specified")
-            df = self.get_cell_metadata(fov)
-            cells = df.index.to_list()
-
-        boundaries = {}
-        for cell in cells:
-            hdf_path = self._watershed_cell_boundary_hdf_paths[fov]
-            boundaries[cell] = WatershedCellBoundary(hdf_path=hdf_path, cell_id=cell)
-        return boundaries
 
     def get_rgb_image(self, r_name=None, g_name=None, b_name=None, as_float=False, **kwargs):
         """
@@ -355,3 +312,15 @@ class MerfishExperimentRegion:
             ax.set_title(name)
             plot_i += 1
         return fig
+
+    # ==========================================================================
+    # smFISH analysis
+    # ==========================================================================
+
+    def _call_spots_fov(self, image_name, fov, **spot_kwargs):
+        from ..tl.smfish import call_spot
+
+        image = self.get_image(image_name)
+
+        spot, *_ = call_spot(image, **spot_kwargs)
+        return

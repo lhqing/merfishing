@@ -59,7 +59,7 @@ class MerfishTransform:
 
     def pixel_to_micron_transform(self, values):
         """Convert coordinates from pixel to micron."""
-        values = np.array(values)
+        values = np.array(values).astype(np.float32)
         values, input_dims = _value_to_3d(values)
         values_3d = cv2.transform(values, self._pixel_to_micron_trans_mat)
         values = _return_input_dims(values_3d, input_dims)
