@@ -4,6 +4,7 @@ from bigfish.stack import (
     maximum_projection,
     mean_projection,
     median_projection,
+    rescale,
 )
 
 
@@ -46,7 +47,7 @@ class MerfishMosaicImage:
         self.image = ds[list(ds.data_vars.keys())[0]]
         return
 
-    def get_image(self, z, y, x, load=True, projection=None):
+    def get_image(self, z, y, x, load=True, projection=None, contrast=True):
         """
         Load image at specific location.
 
@@ -62,6 +63,8 @@ class MerfishMosaicImage:
             If True, load image from zarr.
         projection :
             Project image along z axis. Only valid if load is True and image is 3D.
+        contrast :
+            If True, adjust contrast. Only valid if load is True.
 
         Returns
         -------
@@ -75,6 +78,8 @@ class MerfishMosaicImage:
                 if len(_img.shape) == 3:
                     _img = project_image_z(_img, projection)
 
+            if contrast:
+                _img = rescale(_img)
             return _img
         else:
             return _img

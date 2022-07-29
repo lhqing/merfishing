@@ -65,19 +65,20 @@ class MerfishExperimentRegion:
 
     def get_image(self, name):
         """Get image by name, and select fov (optional) and z slice (optional)."""
-        # TODO FOV coordinate system is not correct
         if name not in self._opened_images:
             try:
                 zarr_path = self._mosaic_image_zarr_paths[name]
             except KeyError:
-                raise KeyError(f"Do not have {name} image, possible names are {self._mosaic_image_zarr_paths.keys()}")
+                raise KeyError(
+                    f"Do not have {name} image, " f"possible names are {self._mosaic_image_zarr_paths.keys()}"
+                )
             img = MerfishMosaicImage(zarr_path)
             self._opened_images[name] = img
         else:
             img = self._opened_images[name]
         return img
 
-    def get_image_fov(self, name, fov, z=None, load=True, projection=None, padding=300):
+    def get_image_fov(self, name, fov, z=None, load=True, projection=None, padding=300, contrast=True):
         """
         Get image data of FOV.
 
@@ -95,6 +96,8 @@ class MerfishExperimentRegion:
             projection type along z axis
         padding :
             padding in pixel
+        contrast :
+            If True, adjust contrast. Only valid if load is True.
 
         Returns
         -------
@@ -106,7 +109,7 @@ class MerfishExperimentRegion:
         yslice = slice(ymin, ymax)
         if z is None:
             z = slice(None)
-        return img.get_image(z, yslice, xslice, load=load, projection=projection)
+        return img.get_image(z, yslice, xslice, load=load, projection=projection, contrast=contrast)
 
     def get_transcripts(self, fov):
         """Get transcripts detected in the FOV."""
@@ -182,56 +185,173 @@ class MerfishExperimentRegion:
             boundaries[cell] = WatershedCellBoundary(hdf_path=hdf_path, cell_id=cell)
         return boundaries
 
-    def plot_fov(self, fov, genes=None, padding=150, ax_width=5):
-        """Plot fov DAPI and PolyT image with transcript spots overlay."""
-        cell_meta = self.get_cell_metadata(fov=fov)
-        boundaries = self.get_cell_boundaries(fov=fov)
+    def get_rgb_image(self, r_name=None, g_name=None, b_name=None, as_float=False, **kwargs):
+        """
+        Get RGB image from up to three different mosaic images.
 
-        transcripts = self.get_transcripts(fov)
+        Parameters
+        ----------
+        r_name :
+            name of red channel image
+        g_name :
+            name of green channel image
+        b_name :
+            name of blue channel image
+        as_float :
+            whether to return image value as float, this is necessary for matplotlib imshow
+        kwargs :
+            keyword arguments for MerfishExperimentRegion.get_image_fov
+
+        Returns
+        -------
+        rgb_image : np.ndarray
+        """
+        rgb = [None, None, None]
+        shape = None
+        dtype = None
+        if r_name is not None:
+            rgb[0] = self.get_image_fov(r_name, **kwargs)
+            shape = rgb[0].shape
+            dtype = rgb[0].dtype
+        if g_name is not None:
+            rgb[1] = self.get_image_fov(g_name, **kwargs)
+            shape = rgb[1].shape
+            dtype = rgb[1].dtype
+        if b_name is not None:
+            rgb[2] = self.get_image_fov(b_name, **kwargs)
+            shape = rgb[2].shape
+            dtype = rgb[2].dtype
+        if shape is None:
+            raise ValueError("At least one of r_name, g_name, b_name must be specified")
+        rgb = np.array([data if data is not None else np.zeros(shape, dtype=dtype) for data in rgb]).transpose(
+            [1, 2, 0]
+        )
+        if as_float:
+            rgb = rgb / np.iinfo(rgb.dtype).max
+            rgb.astype(np.float32)
+        return rgb
+
+    def plot_fov(
+        self,
+        fov,
+        plot_boundary=True,
+        plot_cell_centers=True,
+        genes=None,
+        image_names=("DAPI+PolyT", "DAPI", "PolyT"),
+        padding=150,
+        ax_width=5,
+        dpi=300,
+        n_cols=3,
+        hue_range=0.9,
+    ):
+        """
+        Plot fov DAPI + PolyT and other smFISH images (if exists and provided) with transcript spots overlay.
+
+        Parameters
+        ----------
+        fov :
+            Fov number to plot
+        plot_boundary :
+            whether to plot cell boundaries
+        plot_cell_centers :
+            whether to plot cell centers
+        genes :
+            List of genes to plot their transcripts.
+        image_names :
+            List of image names to plot. See self.image_names for available names.
+            Note that the "DAPI+PolyT" is a special name, which means plotting DAPI
+            in blue chanel and PolyT in red chanel of the same plot.
+        padding :
+            Padding in pixels to add to the image extent.
+        ax_width :
+            Width of the axes in inches.
+        dpi :
+            DPI of the plot.
+        n_cols :
+            Number of columns in the plot.
+        hue_range :
+            A float between 0 and 1. The color range of the image. vmax = vmin + contrast * (vmax - vmin).
+
+        Returns
+        -------
+        fig :
+            Figure object.
+        """
+        # check parameters
         if genes is None:
             genes = []
+        if isinstance(image_names, str):
+            image_names = [image_names]
+        for name in image_names:
+            if name == "DAPI+PolyT":
+                continue
+            else:
+                if name not in self.image_names:
+                    raise ValueError(f"{name} not found")
 
+        # Prepare data
+        cell_meta = self.get_cell_metadata(fov=fov)
+        boundaries = self.get_cell_boundaries(fov=fov)
+        transcripts = self.get_transcripts(fov)
         xmin, ymin, xmax, ymax = self.get_fov_pixel_extent_from_transcripts(fov, padding=padding)
-        fov_images = {
-            name: self.get_image_fov(name=name, fov=fov, projection="max", padding=padding)
-            for name in ["DAPI", "PolyT"]
-        }
-
-        fig, axes = plt.subplots(figsize=(ax_width * 2, ax_width), ncols=2, nrows=1, dpi=300)
-
         offset = (xmin, ymin)
 
-        ax = axes[0]
-        plotter = MerfishImageAxesPlotter(
-            ax=ax,
-            image=fov_images["DAPI"],
-            boundaries=boundaries,
-            cells=cell_meta[["center_x", "center_y"]],
-            transform=self.transform,
-            offset=offset,
-        )
-        plotter.plot_image(cmap="Blues")
-        plotter.plot_boundaries()
-        plotter.plot_cell_centers(s=10)
+        # load gray image data
+        fov_images = {
+            name: self.get_image_fov(name=name, fov=fov, projection="max", padding=padding, contrast=True)
+            for name in image_names
+            if name != "DAPI+PolyT"
+        }
+        # load DAPI+PolyT as RGB image
+        if "DAPI+PolyT" in image_names:
+            fov_images["DAPI+PolyT"] = self.get_rgb_image(
+                b_name="DAPI", r_name="PolyT", as_float=True, fov=fov, projection="max", padding=padding, contrast=True
+            )
 
-        for gene in genes:
-            gene_data = transcripts.loc[transcripts["gene"] == gene, ["global_x", "global_y"]]
-            plotter.plot_scatters(gene_data, label=gene, s=0.5, linewidth=0)
+        # make plots
+        n_images = len(image_names)
+        n_rows = int(np.ceil(n_images / n_cols))
+        fig = plt.figure(figsize=(n_cols * ax_width, n_rows * ax_width), dpi=dpi)
+        fig.suptitle(f"fov {fov}\n{cell_meta.shape[0]} cells\n{transcripts.shape[0]} transcripts")
+        gs = fig.add_gridspec(n_rows, n_cols)
 
-        ax = axes[1]
-        plotter = MerfishImageAxesPlotter(
-            ax=ax,
-            image=fov_images["PolyT"],
-            boundaries=boundaries,
-            cells=cell_meta[["center_x", "center_y"]],
-            transform=self.transform,
-            offset=offset,
-        )
-        plotter.plot_image(cmap="Reds")
-        plotter.plot_boundaries()
-        plotter.plot_cell_centers(s=10)
+        def _plot(_ax, _image, _cmap):
+            plotter = MerfishImageAxesPlotter(
+                ax=_ax,
+                image=_image,
+                boundaries=boundaries,
+                cells=cell_meta[["center_x", "center_y"]],
+                transform=self.transform,
+                offset=offset,
+            )
+            plotter.plot_image(cmap=_cmap, hue_range=hue_range)
+            if plot_boundary:
+                plotter.plot_boundaries()
+            if plot_cell_centers:
+                plotter.plot_cell_centers(s=10)
+            for gene in genes:
+                gene_data = transcripts.loc[transcripts["gene"] == gene, ["global_x", "global_y"]]
+                plotter.plot_scatters(gene_data, label=gene, s=0.5, linewidth=0)
 
-        for gene in genes:
-            gene_data = transcripts.loc[transcripts["gene"] == gene, ["global_x", "global_y"]]
-            plotter.plot_scatters(gene_data, label=gene, s=0.5, linewidth=0)
-        return
+        # plot default nuclei and cytoplasma images
+        default_images = {"DAPI+PolyT": None, "DAPI": "Blues", "PolyT": "Reds"}
+        plot_i = 0
+        for default_image, cmap in default_images.items():
+            if default_image in fov_images:
+                row = int(np.floor(plot_i / n_cols))
+                col = plot_i % n_cols
+                image = fov_images.pop(default_image)
+                ax = fig.add_subplot(gs[row, col])
+                _plot(ax, image, cmap)
+                ax.set_title(default_image)
+                plot_i += 1
+
+        # plot other images
+        for name, gene_image in fov_images.items():
+            row = int(np.floor(plot_i / n_cols))
+            col = plot_i % n_cols
+            ax = fig.add_subplot(gs[row, col])
+            _plot(ax, gene_image, "viridis")
+            ax.set_title(name)
+            plot_i += 1
+        return fig

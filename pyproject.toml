@@ -29,6 +29,7 @@ dependencies = [
     "xarray",
     "opencv-python",
     "shapely",
+    "matplotlib"
 ]
 
 [project.optional-dependencies]

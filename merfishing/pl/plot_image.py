@@ -20,8 +20,18 @@ class MerfishImageAxesPlotter:
         self._transform = transform
         self._offset = offset
 
-    def plot_image(self, aspect="auto", **kwargs):
+    def plot_image(self, aspect="auto", hue_range=0.8, **kwargs):
         """Plot image."""
+        if hue_range:
+            vmin = self._data.min()
+            vmax = self._data.max() * hue_range
+            kwargs["vmin"] = vmin
+            kwargs["vmax"] = vmax
+        if len(self._data.shape) == 3 and self._data.shape[2] == 3:
+            # RGB image, vmin, vmax has no effect
+            # make the image more saturated
+            self._data[self._data > hue_range] = hue_range
+            self._data = self._data / hue_range
         self.ax.imshow(self._data, aspect=aspect, **kwargs)
         return
 

@@ -99,7 +99,7 @@ class ArchiveMerfishExperiment:
 
     def _save_transcripts_to_hdf(self):
         """Save transcripts to HDF5 file."""
-        for path in self.output_path.glob("*/detected_transcripts.txt"):
+        for path in self.output_path.glob("*/detected_transcripts.csv"):
             output_path = path.parent / "detected_transcripts.hdf5"
             transcripts = pd.read_csv(
                 path,
@@ -123,8 +123,6 @@ class ArchiveMerfishExperiment:
                         warnings.simplefilter("ignore")
                         hdf[str(fov)] = fov_df
 
-            # delete input path
-            path.unlink()
         return
 
     def _delete_raw_dir_data(self):
@@ -157,7 +155,14 @@ class ArchiveMerfishExperiment:
         print(f"Archive Raw and Output Data: {tar_path}")
 
         self._convert_tif_to_zarr()
+        print("Converted TIF files to Zarr")
+
         self._save_transcripts_to_hdf()
+        print("Saved transcripts to HDF5")
+
         self._compress_vizgen_output()
+        print("Compressed vizgen output")
+
         self._delete_raw_dir_data()
+        print("Deleted raw data")
         return
