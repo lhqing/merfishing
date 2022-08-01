@@ -70,6 +70,13 @@ class MerfishMosaicImage:
         -------
         image.
         """
+        if z is None:
+            z = slice(None)
+        if x is None:
+            x = slice(None)
+        if y is None:
+            y = slice(None)
+
         _img = self.image[z, y, x]
         if load:
             _img = _img.values

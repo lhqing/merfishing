@@ -12,7 +12,7 @@ from tifffile import imread
 from .dataset import MerfishExperimentDirStructureMixin, MerfishRegionDirStructureMixin
 
 
-def _tif_to_zarr(tif_path, chunk_size=10000):
+def _tif_to_zarr(tif_path, chunk_size=5000):
     img = imread(str(tif_path))
     # tiff image is (y, x), append dims add z in the first dim
     # so the da dim is (z, y, x)
@@ -28,6 +28,43 @@ def _tif_to_zarr(tif_path, chunk_size=10000):
         ds.to_zarr(output_path, append_dim="z")
     else:
         ds.to_zarr(output_path)
+
+    # improve zarr chunking
+    _rechunk_tiff_zarr(output_path, name_prefix, chunk_size)
+    return
+
+
+def _rechunk_tiff_zarr(image_path, image_name, chunk_size=5000):
+    """Rechunk tiff zarr by combine the z dim and chunk on x and y dims."""
+    temp_path = f"{pathlib.Path(image_path).name}.temp"
+    # make sure temp path do not exist
+    shutil.rmtree(temp_path, ignore_errors=True)
+
+    image = xr.open_zarr(image_path)
+
+    image = image.rename({"dim_0": "y", "dim_1": "x"})
+
+    image[image_name].encoding["chunks"] = (image.dims["z"], chunk_size, chunk_size)
+    image[image_name].encoding["preferred_chunks"] = {"z": image.dims["z"], "y": chunk_size, "x": chunk_size}
+
+    # creates metadata only, not actually writing
+    image.to_zarr(temp_path, compute=False, safe_chunks=False, mode="w")
+    x_size = image.dims["x"]
+    y_size = image.dims["y"]
+
+    for x_start in range(0, x_size, chunk_size):
+        x_slice = slice(x_start, x_start + chunk_size)
+        for y_start in range(0, y_size, chunk_size):
+            y_slice = slice(y_start, y_start + chunk_size)
+            image_chunk = image.isel(z=slice(None), x=x_slice, y=y_slice)
+            image_chunk.to_zarr(temp_path, region={"x": x_slice, "y": y_slice})
+
+    # swap the new zarr with the old one
+    image_path = pathlib.Path(image_path)
+    image_path = image_path.parent / image_path.name
+    shutil.move(image_path, f"{image_path}.to_be_deleted")
+    shutil.move(temp_path, image_path)
+    shutil.rmtree(f"{image_path}.to_be_deleted", ignore_errors=True)
     return
 
 
@@ -64,7 +101,7 @@ class ArchiveMerfishRegion(MerfishRegionDirStructureMixin):
     """Archive MERFISH raw and output directories."""
 
     def __init__(self, region_dir):
-        super().__init__(region_dir)
+        super(MerfishRegionDirStructureMixin, self).__init__(region_dir)
 
         # execute the archive process
         self.prepare_archive()
@@ -87,6 +124,7 @@ class ArchiveMerfishRegion(MerfishRegionDirStructureMixin):
             for _, path in sorted(zdict.items(), key=lambda x: x[0]):
                 _tif_to_zarr(path)
                 path.unlink()  # delete after successful conversion
+        return
 
     def _compress_vizgen_output(self):
         """Compress the vizgen default output csv files."""
@@ -148,7 +186,7 @@ class ArchiveMerfishExperiment(MerfishExperimentDirStructureMixin):
     """Archive MERFISH raw and output directories."""
 
     def __init__(self, experiment_dir):
-        super().__init__(experiment_dir)
+        super(MerfishExperimentDirStructureMixin, self).__init__(experiment_dir)
 
         # execute the archive process
         self.prepare_archive()

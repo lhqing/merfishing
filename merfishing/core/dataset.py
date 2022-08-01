@@ -16,8 +16,9 @@ def _json_to_namedtuple(json_path):
 class MerfishExperimentDirStructureMixin:
     """Deal with single MERFISH experiment level data paths."""
 
-    def __init__(self, experiment_dir):
+    def __init__(self, experiment_dir, *args, **kwargs):
         experiment_dir = pathlib.Path(experiment_dir).absolute()
+        print(f"Experiment dir located at {experiment_dir}")
         assert experiment_dir.exists(), f"{experiment_dir} does not exist"
         self.experiment_dir = experiment_dir
         self.experiment_name = experiment_dir.name
@@ -31,9 +32,15 @@ class MerfishExperimentDirStructureMixin:
         )
 
         # experiment information
-        self.codebook_path = list(self.raw_dir.glob("codebook*.csv"))[0]
+        try:
+            self.codebook_path = list(self.raw_dir.glob("codebook*.csv"))[0]
+        except IndexError:
+            raise ValueError(f"{self.raw_dir} does not contain a codebook")
         self.codebook = self._read_codebook()
-        self.experiment_info = _json_to_namedtuple(self.experiment_dir / "experiment.json")
+        try:
+            self.experiment_info = _json_to_namedtuple(self.raw_dir / "experiment.json")
+        except FileNotFoundError:
+            raise ValueError(f"{self.raw_dir} does not contain an experiment.json file")
         self.fov_positions = self._read_fov_positions()
 
         # region_dirs
@@ -46,7 +53,10 @@ class MerfishExperimentDirStructureMixin:
         return df
 
     def _read_fov_positions(self):
-        df = pd.read_csv(self.experiment_dir / "settings/positions.csv", index_col=None, header=None)
+        try:
+            df = pd.read_csv(self.raw_dir / "settings/positions.csv", index_col=None, header=None)
+        except FileNotFoundError:
+            raise ValueError(f"{self.raw_dir} does not contain a settings/positions.csv file")
         df.index.name = "fov_id"
         df.columns = ["x", "y"]
         return df
@@ -55,9 +65,10 @@ class MerfishExperimentDirStructureMixin:
 class MerfishRegionDirStructureMixin(MerfishExperimentDirStructureMixin):
     """Deal with single MERFISH region level data paths."""
 
-    def __init__self(self, region_dir):
+    def __init__(self, region_dir):
         region_dir = pathlib.Path(region_dir).absolute()
         assert region_dir.exists(), f"{region_dir} does not exist"
+        print(f"Region data located at {region_dir}")
 
         # init experiment level information
         experiment_dir = region_dir.parent.parent
@@ -83,6 +94,14 @@ class MerfishRegionDirStructureMixin(MerfishExperimentDirStructureMixin):
         }
         self._watershed_cell_metadata_path = self.region_dir / "cell_metadata.csv.gz"
         self._watershed_cell_by_gene_path = self.region_dir / "cell_by_gene.csv.gz"
+
+        # additional analysis output
+        self._smfish_transcripts_path_default = self.images_dir / "smfish_transcripts.hdf5"
+        if self._smfish_transcripts_path_default.exists():
+            self.smfish_transcripts_path = self._smfish_transcripts_path_default
+        else:
+            # if there is no smFISH data or smFISH spot has not been generated, this will be None
+            self.smfish_transcripts_path = None
 
         # use cell info
         # TODO change to cellpose2 results

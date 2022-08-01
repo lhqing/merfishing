@@ -58,7 +58,19 @@ class MerfishTransform:
         self._pixel_to_micron_trans_mat = pixel_to_micron_trans_mat
 
     def pixel_to_micron_transform(self, values):
-        """Convert coordinates from pixel to micron."""
+        """
+        Convert coordinates from pixel to micron.
+
+        Parameters
+        ----------
+        values :
+            Coordinates in pixel. coordinates order is [x, y, Optional(z)].
+
+        Returns
+        -------
+        values :
+            Coordinates in micron. coordinates order is [x, y, Optional(z)].
+        """
         values = np.array(values).astype(np.float32)
         values, input_dims = _value_to_3d(values)
         values_3d = cv2.transform(values, self._pixel_to_micron_trans_mat)
@@ -66,7 +78,21 @@ class MerfishTransform:
         return values
 
     def micron_to_pixel_transform(self, values, do_round=True):
-        """Convert coordinates from micron to pixel."""
+        """
+        Convert coordinates from micron to pixel.
+
+        Parameters
+        ----------
+        values :
+            Coordinates in micron. coordinates order is [x, y, Optional(z)].
+        do_round :
+            Whether to round the coordinates to integer.
+
+        Returns
+        -------
+        values :
+            Coordinates in pixel. coordinates order is [x, y, Optional(z)].
+        """
         values = np.array(values)
         values, input_dims = _value_to_3d(values)
         values_3d = cv2.transform(values, self._micron_to_pixel_trans_mat)
