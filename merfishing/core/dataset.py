@@ -16,9 +16,10 @@ def _json_to_namedtuple(json_path):
 class MerfishExperimentDirStructureMixin:
     """Deal with single MERFISH experiment level data paths."""
 
-    def __init__(self, experiment_dir, *args, **kwargs):
+    def __init__(self, experiment_dir, verbose=True, *args, **kwargs):
         experiment_dir = pathlib.Path(experiment_dir).absolute()
-        print(f"Experiment dir located at {experiment_dir}")
+        if verbose:
+            print(f"Experiment dir located at {experiment_dir}")
         assert experiment_dir.exists(), f"{experiment_dir} does not exist"
         self.experiment_dir = experiment_dir
         self.experiment_name = experiment_dir.name
@@ -32,47 +33,63 @@ class MerfishExperimentDirStructureMixin:
         )
 
         # experiment information
-        try:
-            self.codebook_path = list(self.raw_dir.glob("codebook*.csv"))[0]
-        except IndexError:
-            raise ValueError(f"{self.raw_dir} does not contain a codebook")
-        self.codebook = self._read_codebook()
-        try:
-            self.experiment_info = _json_to_namedtuple(self.raw_dir / "experiment.json")
-        except FileNotFoundError:
-            raise ValueError(f"{self.raw_dir} does not contain an experiment.json file")
-        self.fov_positions = self._read_fov_positions()
+        self._codebook = None
+        self._experiment_info = None
+        self._fov_positions = None
 
         # region_dirs
         self.region_dirs = [pathlib.Path(p) for p in self.output_dir.glob("region*")]
         return
 
-    def _read_codebook(self):
-        df = pd.read_csv(self.codebook_path, index_col=0)
-        df["barcode_id"] = range(df.shape[0])
-        return df
+    @property
+    def experiment_info(self):
+        """Get experiment information."""
+        if self._experiment_info is None:
+            try:
+                self._experiment_info = _json_to_namedtuple(self.raw_dir / "experiment.json")
+            except FileNotFoundError:
+                raise ValueError(f"{self.raw_dir} does not contain an experiment.json file")
+        return self._experiment_info
 
-    def _read_fov_positions(self):
-        try:
-            df = pd.read_csv(self.raw_dir / "settings/positions.csv", index_col=None, header=None)
-        except FileNotFoundError:
-            raise ValueError(f"{self.raw_dir} does not contain a settings/positions.csv file")
-        df.index.name = "fov_id"
-        df.columns = ["x", "y"]
-        return df
+    @property
+    def codebook(self):
+        """Get codebook."""
+        if self._codebook is None:
+            try:
+                codebook_path = list(self.raw_dir.glob("codebook*.csv"))[0]
+            except IndexError:
+                raise ValueError(f"{self.raw_dir} does not contain a codebook")
+            df = pd.read_csv(codebook_path, index_col=0)
+            df["barcode_id"] = range(df.shape[0])
+            self._codebook = df
+        return self._codebook
+
+    @property
+    def fov_positions(self):
+        """Get fov positions."""
+        if self._fov_positions is None:
+            try:
+                df = pd.read_csv(self.raw_dir / "settings/positions.csv", index_col=None, header=None)
+            except FileNotFoundError:
+                raise ValueError(f"{self.raw_dir} does not contain a settings/positions.csv file")
+            df.index.name = "fov_id"
+            df.columns = ["x", "y"]
+            self._fov_positions = df
+        return self._fov_positions
 
 
 class MerfishRegionDirStructureMixin(MerfishExperimentDirStructureMixin):
     """Deal with single MERFISH region level data paths."""
 
-    def __init__(self, region_dir):
+    def __init__(self, region_dir, verbose=True):
         region_dir = pathlib.Path(region_dir).absolute()
         assert region_dir.exists(), f"{region_dir} does not exist"
-        print(f"Region data located at {region_dir}")
+        if verbose:
+            print(f"Region data located at {region_dir}")
 
         # init experiment level information
         experiment_dir = region_dir.parent.parent
-        super().__init__(experiment_dir)
+        super().__init__(experiment_dir, verbose=verbose)
 
         # region dir
         region_dir = pathlib.Path(region_dir).absolute()

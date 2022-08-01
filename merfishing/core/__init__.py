@@ -7,6 +7,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import xarray as xr
 
 from ..pl.plot_image import MerfishImageAxesPlotter
 from .boundary import WatershedCellBoundary
@@ -16,7 +17,7 @@ from .transform import MerfishTransform
 
 
 def _call_spots_single_fov(
-    image_path, x, y, output_path, plot=False, detect_dense=True, projection="max", verbose=False, **spot_kwargs
+    image_path, x, y, z, output_path, plot=False, detect_dense=True, projection="max", verbose=False, **spot_kwargs
 ):
     """Worker function for calling spots in a single image slice and save data on disk."""
     from ..tl.smfish import call_spot
@@ -30,7 +31,7 @@ def _call_spots_single_fov(
         print(f"Calling spots in {pathlib.Path(image_path).name}, x={x}, y={y}," f"\nsaving to {output_path}")
 
     _image = MerfishMosaicImage(image_path)
-    fov_image = _image.get_image(z=None, y=y, x=x, load=True, contrast=False, projection=projection)
+    fov_image = _image.get_image(z=z, y=y, x=x, load=True, contrast=False, projection=projection)
 
     result, *_ = call_spot(fov_image, detect_dense=detect_dense, plot=plot, verbose=verbose, **spot_kwargs)
 
@@ -42,13 +43,106 @@ def _call_spots_single_fov(
     return
 
 
+def _convert_feature_meta(merfish, feature_meta, fov, padding):
+    # add offset to convert to global pixel
+    xmin, ymin, *_ = merfish.get_fov_pixel_extent_from_transcripts(fov, padding)
+    feature_meta.loc[:, ["center_x", "min_x", "max_x"]] += xmin
+    feature_meta.loc[:, ["center_y", "min_y", "max_y"]] += ymin
+
+    # transform to global micron
+    feature_meta[["center_x", "center_y"]] = merfish.transform.pixel_to_micron_transform(
+        feature_meta[["center_x", "center_y"]]
+    )
+    feature_meta[["min_x", "min_y"]] = merfish.transform.pixel_to_micron_transform(feature_meta[["min_x", "min_y"]])
+    feature_meta[["max_x", "max_y"]] = merfish.transform.pixel_to_micron_transform(feature_meta[["max_x", "max_y"]])
+    feature_meta["fov"] = fov
+    feature_meta.index = feature_meta["fov"].astype(str) + "_" + feature_meta.index.astype(str)
+    return feature_meta
+
+
+def _count_cell_by_gene_table(merfish, offset, feature_mask, fov):
+    from shapely.geometry import Point
+
+    from ..tl.cellpose import outlines_list_3d
+
+    def _transform_outline_pixel_to_micron(coords):
+        coords += [[offset[0], offset[1]]]
+        return merfish.transform.pixel_to_micron_transform(coords)
+
+    outlines = outlines_list_3d(
+        mask_3d=feature_mask, transform_func=_transform_outline_pixel_to_micron, as_polygon=True
+    )
+
+    transcripts = merfish.get_transcripts(fov)
+    transcript_z_points = defaultdict(list)
+    for z, sub_df in transcripts.groupby("global_z"):
+        points = [(Point(x, y), gene) for _, (x, y, gene) in sub_df[["global_x", "global_y", "gene"]].iterrows()]
+        transcript_z_points[z] += points
+
+    all_genes = merfish.codebook.index
+
+    feature_records = {}
+    for feature, polygons in outlines.items():
+        feature_gene_counts = defaultdict(int)
+        for z_polygon, polygon in polygons.items():
+            for point, gene in transcript_z_points[z_polygon]:
+                if polygon.contains(point):
+                    feature_gene_counts[gene] += 1
+        feature_records[feature] = pd.Series(feature_gene_counts, dtype="float64").reindex(all_genes).fillna(0)
+    cell_by_gene = pd.DataFrame(feature_records, dtype="uint32").T  # row is cell, col is gene
+    return cell_by_gene
+
+
+def _cell_segmentation_single_fov(region_dir, fov, padding, output_prefix, model_type, diameter, verbose=False):
+    from ..tl.cellpose import run_cellpose
+
+    if verbose:
+        print(f"Segmenting cells in {fov}")
+
+    merfish = MerfishExperimentRegion(region_dir, verbose=False)
+    _image = merfish.get_rgb_image("PolyT++DAPI", fov=fov, padding=padding, projection=None)
+
+    feature_mask, feature_meta = run_cellpose(
+        image=_image,
+        model_type=model_type,
+        diameter=diameter,
+        gpu=False,
+        channels=[[0, 2]],
+        channel_axis=3,
+        z_axis=0,
+        buffer_pixel_size=15,
+        plot=False,
+        verbose=verbose,
+    )
+
+    # convert feature meta coords from local pixel to global micron
+    feature_meta = _convert_feature_meta(merfish, feature_meta, fov, padding)
+
+    # count cell-by-gene table
+    xmin, ymin, *_ = merfish.get_fov_pixel_extent_from_transcripts(fov=fov, padding=padding)
+    cell_by_gene = _count_cell_by_gene_table(merfish, offset=(xmin, ymin), feature_mask=feature_mask, fov=fov)
+    cell_by_gene.index = str(fov) + "_" + cell_by_gene.index.astype(str)
+
+    # save to disk
+    output_prefix = str(output_prefix)
+    feature_meta.to_csv(output_prefix + "_feature_meta.csv.gz")
+    cell_by_gene.to_csv(output_prefix + "_cell_by_gene.csv.gz")
+    np.save(output_prefix + "_feature_mask.npy", feature_mask)
+
+    # save success flag
+    with open(output_prefix + "_success.txt", "w") as _:
+        pass
+    return
+
+
 class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
     """Entry point for one region of a MERFISH experiment."""
 
-    def __init__(self, region_dir):
-        print("MERFISH Experiment Region")
+    def __init__(self, region_dir, verbose=True):
+        if verbose:
+            print("MERFISH Experiment Region")
         # setup all the file paths and load experiment manifest information
-        super().__init__(region_dir)
+        super().__init__(region_dir, verbose=verbose)
 
         # Transform image coords between micron and pixel
         self.transform = MerfishTransform(self.micron_to_pixel_transform_path)
@@ -60,6 +154,13 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
         self._fov_ids = None
         self._fov_micron_extends = {}
         return
+
+    def _get_mosaic_z_slices(self):
+        mosaic_zs = defaultdict(list)
+        for file in self.image_manifest.mosaic_files:
+            mosaic_zs[file["stain"]].append(file["z"])
+        mosaic_zs = {k: sorted(v) for k, v in mosaic_zs.items()}
+        return mosaic_zs
 
     @property
     def image_names(self):
@@ -169,6 +270,9 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
             if b_name == "":
                 b_name = None
 
+        if "projection" not in kwargs:
+            kwargs["projection"] = "max"
+
         if r_name is not None:
             rgb[0] = self.get_image_fov(r_name, **kwargs)
             shape = rgb[0].shape
@@ -185,9 +289,15 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
         if shape is None:
             raise ValueError("At least one of r_name, g_name, b_name must be specified")
 
-        rgb = np.array([data if data is not None else np.zeros(shape, dtype=dtype) for data in rgb]).transpose(
-            [1, 2, 0]
-        )
+        rgb = np.array([data if data is not None else np.zeros(shape, dtype=dtype) for data in rgb])
+
+        if len(rgb.shape) == 3:
+            rgb = rgb.transpose([1, 2, 0])
+        elif len(rgb.shape) == 4:
+            rgb = rgb.transpose([1, 2, 3, 0])
+        else:
+            pass
+
         if as_float:
             rgb = rgb / np.iinfo(rgb.dtype).max
             rgb.astype(np.float32)
@@ -407,7 +517,7 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
     # smFISH analysis
     # ==========================================================================
 
-    def _convert_spots_results(self, result_path, offset, image_name, fov):
+    def _convert_spots_results(self, result_path, offset, z, image_name, fov):
         """Convert call_spots result to transcript format as vizgen output."""
         # load npy
         result = np.load(result_path)
@@ -431,9 +541,10 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
                 "barcode_id": self.codebook.loc[image_name, "barcode_id"],
                 "transcript_id": self.codebook.loc[image_name, "id"],
                 "gene": image_name,
-                "global_z": result[:, 0],
+                "global_z": int(z),
                 "fov": fov,
-            }
+            },
+            index=global_spot_micron.index,
         )
 
         columns = ["barcode_id", "global_x", "global_y", "global_z", "x", "y", "fov", "gene", "transcript_id"]
@@ -497,33 +608,39 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
             if name not in self.smfish_genes:
                 raise ValueError(f"{name} is not a valid image name, " f"available images are {self.smfish_genes}")
 
+        mosaic_z_slices = self._get_mosaic_z_slices()
         with ProcessPoolExecutor(cpu) as executor:
             futures = {}
             for image_name in image_names:
                 image_path = self._mosaic_image_zarr_paths[image_name]
                 for fov in self.fov_ids:
-                    xmin, ymin, xmax, ymax = self.get_fov_pixel_extent_from_transcripts(fov=fov, padding=padding)
-                    x_slice = slice(xmin, xmax)
-                    y_slice = slice(ymin, ymax)
-                    output_path = temp_dir / f"{image_name}_{fov}.npy"
-                    future = executor.submit(
-                        _call_spots_single_fov,
-                        image_path=image_path,
-                        x=x_slice,
-                        y=y_slice,
-                        output_path=output_path,
-                        plot=False,
-                        detect_dense=detect_dense,
-                        projection=projection,
-                        verbose=verbose,
-                        **spot_kwargs,
-                    )
-                    futures[future] = (image_name, fov, output_path)
+                    for z in mosaic_z_slices[image_name]:
+                        output_path = temp_dir / f"{image_name}_{fov}_{z}.npy"
+                        success_path = temp_dir / f"{image_name}_{fov}_{z}.success"
+                        if all((output_path.exists(), success_path.exists(), not redo)):
+                            continue
+                        xmin, ymin, xmax, ymax = self.get_fov_pixel_extent_from_transcripts(fov=fov, padding=padding)
+                        x_slice = slice(xmin, xmax)
+                        y_slice = slice(ymin, ymax)
+                        future = executor.submit(
+                            _call_spots_single_fov,
+                            image_path=image_path,
+                            x=x_slice,
+                            y=y_slice,
+                            z=z,
+                            output_path=output_path,
+                            plot=False,
+                            detect_dense=detect_dense,
+                            projection=projection,
+                            verbose=verbose,
+                            **spot_kwargs,
+                        )
+                        futures[future] = (image_name, fov, z, output_path)
 
             for future in as_completed(futures):
-                image_name, fov, output_path = futures[future]
+                image_name, fov, z, output_path = futures[future]
                 if verbose:
-                    print(f"{image_name} {fov} finished")
+                    print(f"{image_name} {fov} {z} finished")
                 future.result()
 
         # merge all results into single pd.HDFStore
@@ -533,18 +650,18 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
         # get all paths
         fov_results = defaultdict(dict)
         for path in temp_dir.glob("*.npy"):
-            image_name, fov = path.stem.split("_")
-            fov_results[fov][image_name] = path
+            image_name, fov, z = path.stem.split("_")
+            fov_results[fov][(image_name, z)] = path
 
         # save transcripts per fov
         for fov, fov_images in fov_results.items():
             if verbose:
                 print(f"Writing smFISH transcripts for fov {fov}")
             transcripts = []
-            for image_name, result_path in fov_images.items():
+            for (image_name, z), result_path in fov_images.items():
                 xmin, ymin, *_ = self.get_fov_pixel_extent_from_transcripts(fov=fov, padding=padding)
                 transcript = self._convert_spots_results(
-                    result_path=result_path, offset=(xmin, ymin), image_name=image_name, fov=fov
+                    result_path=result_path, offset=(xmin, ymin), z=z, image_name=image_name, fov=fov
                 )
                 transcripts.append(transcript)
             transcripts = pd.concat(transcripts)
@@ -564,3 +681,125 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
     # ==========================================================================
     # Cell segmentation analysis
     # ==========================================================================
+
+    def cell_segmentation(self, model_type, diameter, jobs, padding=100, verbose=False, redo=False):
+        """
+        Run cell segmentation on DAPI and PolyT images.
+
+        Parameters
+        ----------
+        model_type :
+            Cellpose2 model type to use for cell segmentation. See cellpose.models.MODEL_NAMES for available models.
+        diameter :
+            Expected diameter of cells to segment.
+        jobs :
+            Number of jobs to use for cell segmentation.
+        padding :
+            Padding to add to FOV image borders.
+        verbose :
+            Whether to print progress.
+        redo :
+            Whether to redo the analysis when the cell segmentation results already exist.
+        """
+        import time
+
+        final_meta_path = self.region_dir / "cell_metadata.cellpose.csv.gz"
+        final_meta_temp_path = self.region_dir / "cell_metadata.cellpose.temp.csv.gz"
+        final_cell_by_gene_path = self.region_dir / "cell_by_gene.cellpose.csv.gz"
+        final_cell_by_gene_temp_path = self.region_dir / "cell_by_gene.cellpose.temp.csv.gz"
+        final_cell_masks_path = self.region_dir / "cell_masks.cellpose.zarr"
+        final_cell_masks_temp_path = self.region_dir / "cell_masks.cellpose.zarr"
+
+        # determine if the cell segmentation results already exist, and whether redo the analysis
+        exists = np.array([final_cell_masks_path.exists(), final_cell_by_gene_path.exists(), final_meta_path.exists()])
+        if np.all(exists):
+            if redo:
+                print("Cell segmentation results already exist, but redo is True. Deleting...")
+                final_cell_masks_path.unlink()
+                final_cell_by_gene_path.unlink()
+                final_meta_path.unlink()
+            else:
+                print(
+                    f"Cell segmentation results already exist at {final_cell_masks_path}. "
+                    "Use redo=True to redo the analysis."
+                )
+                return
+        else:
+            if np.any(exists):
+                print("Cell segmentation results are incomplete. Deleting...")
+                final_cell_masks_path.unlink(missing_ok=True)
+                final_cell_by_gene_path.unlink(missing_ok=True)
+                final_meta_path.unlink(missing_ok=True)
+            if verbose:
+                print("Running cell segmentation using cellpose2.")
+
+        # get the cell segmentation results, save in temporary directory first
+        temp_dir = self.region_dir / "cell_segmentation_temp"
+        temp_dir.mkdir(exist_ok=True)
+
+        output_prefix_list = []
+        with ProcessPoolExecutor(jobs) as executor:
+            futures = {}
+            for fov in self.fov_ids[:100]:  # TODO: remove this limitation
+                output_prefix = temp_dir / f"{fov}"
+                output_prefix_list.append(output_prefix)
+                success_flag = f"{output_prefix}_success.txt"
+                if pathlib.Path(success_flag).exists() and not redo:
+                    continue
+
+                future = executor.submit(
+                    _cell_segmentation_single_fov,
+                    region_dir=str(self.region_dir),
+                    fov=fov,
+                    padding=padding,
+                    model_type=model_type,
+                    output_prefix=output_prefix,
+                    verbose=verbose,
+                    diameter=diameter,
+                )
+                futures[future] = (fov, output_prefix)
+                time.sleep(1)
+
+            for future in as_completed(futures):
+                fov, output_prefix = futures[future]
+                if verbose:
+                    print(f"FOV {fov} finished")
+                future.result()
+
+        # collect the cell segmentation results
+        all_meta = []
+        all_masks = {}
+        all_cell_by_genes = []
+        for output_prefix in output_prefix_list:
+            output_prefix = str(output_prefix)
+            feature_meta = pd.read_csv(output_prefix + "_feature_meta.csv.gz", index_col=0)
+            all_meta.append(feature_meta)
+
+            cell_by_gene = pd.read_csv(output_prefix + "_cell_by_gene.csv.gz", index_col=0)
+            all_cell_by_genes.append(cell_by_gene)
+
+            mask = np.load(output_prefix + "_feature_mask.npy")
+            all_masks[fov] = xr.DataArray(mask, dims=("z", "y", "x"))
+            all_masks[fov].encoding["chunks"] = mask.shape
+            xmin, ymin, *_ = self.get_fov_pixel_extent_from_transcripts(fov=fov, padding=padding)
+            all_masks[fov].attrs["offset"] = (xmin, ymin)
+
+        # save final results
+        all_meta = pd.concat(all_meta)
+        all_meta.to_csv(final_meta_temp_path)
+
+        all_cell_by_genes = pd.concat(all_cell_by_genes)
+        all_cell_by_genes.to_csv(final_cell_by_gene_temp_path)
+
+        all_masks = xr.Dataset(all_masks)
+        all_masks.to_zarr(final_cell_masks_temp_path)
+
+        # move temporary files to final files
+        final_meta_temp_path.rename(final_meta_path)
+        final_cell_by_gene_temp_path.rename(final_cell_by_gene_path)
+        final_cell_masks_temp_path.rename(final_cell_masks_path)
+
+        # delete temporary directory
+        # TODO
+        # shutil.rmtree(temp_dir, ignore_errors=True)
+        return

@@ -57,6 +57,7 @@ def _rechunk_tiff_zarr(image_path, image_name, chunk_size=5000):
         for y_start in range(0, y_size, chunk_size):
             y_slice = slice(y_start, y_start + chunk_size)
             image_chunk = image.isel(z=slice(None), x=x_slice, y=y_slice)
+            image_chunk.load()
             image_chunk.to_zarr(temp_path, region={"x": x_slice, "y": y_slice})
 
     # swap the new zarr with the old one
