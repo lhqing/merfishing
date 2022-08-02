@@ -33,7 +33,8 @@ dependencies = [
     "cellpose",
     "torch",
     "tables",
-    "big-fish"
+    "big-fish",
+    "numpy==1.22"
 ]
 
 [project.optional-dependencies]
