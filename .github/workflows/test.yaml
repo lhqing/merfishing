@@ -17,7 +17,7 @@ jobs:
             fail-fast: false
             matrix:
                 python: ["3.8", "3.10"]
-                os: [ubuntu-latest]
+                os: [ubuntu-latest, windows-latest]
 
         env:
             OS: ${{ matrix.os }}
@@ -54,7 +54,7 @@ jobs:
                   PLATFORM: ${{ matrix.os }}
                   DISPLAY: :42
               run: |
-                  pytest -v --cov --color=yes
+                  python -m pytest -v --cov --color=yes tests/
             - name: Upload coverage
               env:
                   CODECOV_NAME: ${{ matrix.python }}-${{ matrix.os }}
