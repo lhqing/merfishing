@@ -31,7 +31,7 @@ dependencies = [
     "shapely",
     "matplotlib",
     "cellpose",
-    "bigfish"
+    "big-fish"
 ]
 
 [project.optional-dependencies]
