@@ -1,5 +1,6 @@
 import pathlib
 import shutil
+import time
 import warnings
 from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor, as_completed
@@ -10,7 +11,6 @@ import pandas as pd
 import xarray as xr
 
 from ..pl.plot_image import MerfishImageAxesPlotter
-from .boundary import WatershedCellBoundary
 from .dataset import MerfishRegionDirStructureMixin
 from .image import MerfishMosaicImage
 from .transform import MerfishTransform
@@ -22,6 +22,7 @@ def _call_spots_single_fov(
     """Worker function for calling spots in a single image slice and save data on disk."""
     from ..tl.smfish import call_spot
 
+    output_path = pathlib.Path(output_path)
     # skip if output file exists
     success_path = output_path.with_suffix(".success")
     if success_path.exists():
@@ -29,14 +30,12 @@ def _call_spots_single_fov(
 
     if verbose:
         print(f"Calling spots in {pathlib.Path(image_path).name}, x={x}, y={y}," f"\nsaving to {output_path}")
-
-    _image = MerfishMosaicImage(image_path)
+    _image = MerfishMosaicImage(image_path, use_threads=False)
     fov_image = _image.get_image(z=z, y=y, x=x, load=True, contrast=False, projection=projection)
-
     result, *_ = call_spot(fov_image, detect_dense=detect_dense, plot=plot, verbose=verbose, **spot_kwargs)
 
     # save result to temp npy file
-    np.save(output_path, result)
+    np.save(str(output_path), result)
     # touch a success file flag
     with open(success_path, "w") as _:
         pass
@@ -100,7 +99,7 @@ def _cell_segmentation_single_fov(region_dir, fov, padding, output_prefix, model
         print(f"Segmenting cells in {fov}")
 
     merfish = MerfishExperimentRegion(region_dir, verbose=False)
-    _image = merfish.get_rgb_image("PolyT++DAPI", fov=fov, padding=padding, projection=None)
+    _image = merfish.get_rgb_image("PolyT++DAPI", fov=fov, padding=padding, projection=None, use_threads=False)
 
     feature_mask, feature_meta = run_cellpose(
         image=_image,
@@ -138,11 +137,11 @@ def _cell_segmentation_single_fov(region_dir, fov, padding, output_prefix, model
 class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
     """Entry point for one region of a MERFISH experiment."""
 
-    def __init__(self, region_dir, verbose=True):
+    def __init__(self, region_dir, verbose=True, cell_segmentation="cellpose"):
         if verbose:
             print("MERFISH Experiment Region")
         # setup all the file paths and load experiment manifest information
-        super().__init__(region_dir, verbose=verbose)
+        super().__init__(region_dir, verbose=verbose, cell_segmentation=cell_segmentation)
 
         # Transform image coords between micron and pixel
         self.transform = MerfishTransform(self.micron_to_pixel_transform_path)
@@ -184,22 +183,52 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
         df = self._cell_metadata
 
         if fov is not None:
-            df = df.loc[df["fov"] == fov]
+            df = df.loc[df["fov"] == fov].copy()
         return df
 
-    def get_cell_boundaries(self, fov=None, cells=None):
-        """Get cell boundaries."""
+    def _get_cell_watershed_boundaries(self, fov=None, cells=None) -> dict:
+        """Get cell watershed boundaries."""
+        from .boundary import load_watershed_boundaries
+
         if cells is None:
             if fov is None:
                 raise ValueError("fov or cell must be specified")
             df = self.get_cell_metadata(fov)
             cells = df.index.to_list()
 
-        boundaries = {}
-        for cell in cells:
-            hdf_path = self._watershed_cell_boundary_hdf_paths[fov]
-            boundaries[cell] = WatershedCellBoundary(hdf_path=hdf_path, cell_id=cell)
+        hdf_path = self._watershed_cell_boundary_hdf_paths[fov]
+        boundaries = load_watershed_boundaries(hdf_path, cells)
         return boundaries
+
+    def _get_cell_cellpose_boundaries(self, fov=None, cells=None) -> dict:
+        """Get cell cellpose boundaries."""
+        from .boundary import load_cellpose_boundaries
+
+        mask_path = self._cellpose_cell_mask_path / str(fov)
+        boundaries = load_cellpose_boundaries(
+            mask_path=mask_path, cells=cells, pixel_to_micron_transform=self.transform.pixel_to_micron_transform
+        )
+        return boundaries
+
+    def get_cell_boundaries(self, fov=None, cells=None) -> dict:
+        """
+        Get cell boundaries.
+
+        Parameters
+        ----------
+        fov :
+            Fov id.
+        cells :
+            List of cell ids.
+
+        Returns
+        -------
+        A dictionary of cell ids and their boundaries.
+        """
+        if self.segmentation_method == "cellpose":
+            return self._get_cell_cellpose_boundaries(fov, cells)
+        else:
+            return self._get_cell_watershed_boundaries(fov, cells)
 
     def get_transcripts(self, fov, smfish=True):
         """Get transcripts detected in the FOV."""
@@ -225,13 +254,13 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
     # Get mosaic image, deal with FOV coords and make plots
     # ==========================================================================
 
-    def get_image(self, name):
+    def get_image(self, name, use_threads=None):
         """Get image by name, and select fov (optional) and z slice (optional)."""
         try:
             zarr_path = self._mosaic_image_zarr_paths[name]
         except KeyError:
             raise KeyError(f"Do not have {name} image, " f"possible names are {self.image_names}")
-        img = MerfishMosaicImage(zarr_path)
+        img = MerfishMosaicImage(zarr_path, use_threads=use_threads)
         return img
 
     def get_rgb_image(self, name=None, r_name=None, g_name=None, b_name=None, as_float=False, **kwargs):
@@ -355,7 +384,9 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
         ymax = min(y_max_pixel, int(pixel_extent[1, 1] + padding))
         return xmin, ymin, xmax, ymax
 
-    def get_image_fov(self, name, fov, z=None, load=True, projection=None, padding=300, contrast=True):
+    def get_image_fov(
+        self, name, fov, z=None, load=True, projection=None, padding=300, contrast=True, use_threads=None
+    ):
         """
         Get image data of FOV.
 
@@ -375,12 +406,14 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
             padding in pixel
         contrast :
             If True, adjust contrast. Only valid if load is True.
+        use_threads :
+            whether to use multi-threads to load image data, have to set to False if using multiprocessing
 
         Returns
         -------
         image : np.ndarray or xr.DataArray
         """
-        img = self.get_image(name)
+        img = self.get_image(name, use_threads=use_threads)
         xmin, ymin, xmax, ymax = self.get_fov_pixel_extent_from_transcripts(fov, padding=padding)
         xslice = slice(xmin, xmax)
         yslice = slice(ymin, ymax)
@@ -400,6 +433,9 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
         dpi=300,
         n_cols=3,
         hue_range=0.9,
+        boundary_kws=None,
+        cell_centers_kws=None,
+        gene_scatter_kws=None,
     ):
         """
         Plot fov PolyT + DAPI and other smFISH images (if exists and provided) with transcript spots overlay.
@@ -429,6 +465,12 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
             Number of columns in the plot.
         hue_range :
             A float between 0 and 1. The color range of the image. vmax = vmin + contrast * (vmax - vmin).
+        boundary_kws :
+            Keyword arguments for customize cell boundaries.
+        cell_centers_kws :
+            Keyword arguments for customize cell centers.
+        gene_scatter_kws :
+            Keyword arguments for customize gene scatter.
 
         Returns
         -------
@@ -473,7 +515,7 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
         fig.suptitle(f"fov {fov}\n{cell_meta.shape[0]} cells\n{transcripts.shape[0]} transcripts")
         gs = fig.add_gridspec(n_rows, n_cols)
 
-        def _plot(_ax, _image, _cmap):
+        def _plot(_ax, _image, _cmap, _boundary_kws, _cell_centers_kws, _gene_scatter_kws):
             plotter = MerfishImageAxesPlotter(
                 ax=_ax,
                 image=_image,
@@ -484,12 +526,20 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
             )
             plotter.plot_image(cmap=_cmap, hue_range=hue_range)
             if plot_boundary:
-                plotter.plot_boundaries()
+                if _boundary_kws is None:
+                    _boundary_kws = {}
+                plotter.plot_boundaries(**_boundary_kws)
             if plot_cell_centers:
-                plotter.plot_cell_centers(s=10)
+                if _cell_centers_kws is None:
+                    _cell_centers_kws = {}
+                plotter.plot_cell_centers(s=10, **_cell_centers_kws)
             for gene in genes:
+                default_scatter_kws = {"s": 0.5, "linewidths": 0}
+                if _gene_scatter_kws is None:
+                    _gene_scatter_kws = {}
+                default_scatter_kws.update(_gene_scatter_kws)
                 gene_data = transcripts.loc[transcripts["gene"] == gene, ["global_x", "global_y"]]
-                plotter.plot_scatters(gene_data, label=gene, s=0.5, linewidth=0)
+                plotter.plot_scatters(gene_data, label=gene, **default_scatter_kws)
 
         # plot default nuclei and cytoplasma images
         default_image_cmap = {"DAPI": "Blues", "PolyT": "Reds"}
@@ -508,13 +558,13 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
             col = plot_i % n_cols
 
             ax = fig.add_subplot(gs[row, col])
-            _plot(ax, gene_image, cmap)
+            _plot(ax, gene_image, cmap, boundary_kws, cell_centers_kws, gene_scatter_kws)
             ax.set_title(name)
             plot_i += 1
         return fig
 
     # ==========================================================================
-    # smFISH analysis
+    # smFISH analysis, spot detection
     # ==========================================================================
 
     def _convert_spots_results(self, result_path, offset, z, image_name, fov):
@@ -587,13 +637,14 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
         if self.smfish_transcripts_path is not None:
             if redo:
                 print("smFISH transcripts already exist, but redo is True. Deleting...")
-                pathlib.Path(self.smfish_transcripts_path).unlink()
+                pathlib.Path(self.smfish_transcripts_path).unlink(missing_ok=True)
             else:
-                print(
-                    f"smFISH transcripts already exist at {self.smfish_transcripts_path}. "
-                    f"Use redo=True to redo the analysis."
-                )
-                return
+                if self.smfish_transcripts_path.exists():
+                    print(
+                        f"smFISH transcripts already exist at {self.smfish_transcripts_path}. "
+                        f"Use redo=True to redo the analysis."
+                    )
+                    return
 
         temp_dir = self.region_dir / "smFISH_spot_temp"
         temp_dir.mkdir(exist_ok=True)
@@ -636,6 +687,7 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
                             **spot_kwargs,
                         )
                         futures[future] = (image_name, fov, z, output_path)
+                        time.sleep(0.05)
 
             for future in as_completed(futures):
                 image_name, fov, z, output_path = futures[future]
@@ -707,17 +759,17 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
         final_meta_temp_path = self.region_dir / "cell_metadata.cellpose.temp.csv.gz"
         final_cell_by_gene_path = self.region_dir / "cell_by_gene.cellpose.csv.gz"
         final_cell_by_gene_temp_path = self.region_dir / "cell_by_gene.cellpose.temp.csv.gz"
-        final_cell_masks_path = self.region_dir / "cell_masks.cellpose.zarr"
-        final_cell_masks_temp_path = self.region_dir / "cell_masks.cellpose.zarr"
+        final_cell_masks_path = self.region_dir / "cell_masks.cellpose"
+        final_cell_masks_temp_path = self.region_dir / "cell_masks.cellpose.temp"
 
         # determine if the cell segmentation results already exist, and whether redo the analysis
         exists = np.array([final_cell_masks_path.exists(), final_cell_by_gene_path.exists(), final_meta_path.exists()])
         if np.all(exists):
             if redo:
                 print("Cell segmentation results already exist, but redo is True. Deleting...")
-                final_cell_masks_path.unlink()
-                final_cell_by_gene_path.unlink()
-                final_meta_path.unlink()
+                shutil.rmtree(final_cell_masks_path, ignore_errors=True)
+                final_cell_by_gene_path.unlink(missing_ok=True)
+                final_meta_path.unlink(missing_ok=True)
             else:
                 print(
                     f"Cell segmentation results already exist at {final_cell_masks_path}. "
@@ -727,7 +779,7 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
         else:
             if np.any(exists):
                 print("Cell segmentation results are incomplete. Deleting...")
-                final_cell_masks_path.unlink(missing_ok=True)
+                shutil.rmtree(final_cell_masks_path, ignore_errors=True)
                 final_cell_by_gene_path.unlink(missing_ok=True)
                 final_meta_path.unlink(missing_ok=True)
             if verbose:
@@ -740,7 +792,7 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
         output_prefix_list = []
         with ProcessPoolExecutor(jobs) as executor:
             futures = {}
-            for fov in self.fov_ids[:100]:  # TODO: remove this limitation
+            for fov in self.fov_ids:
                 output_prefix = temp_dir / f"{fov}"
                 output_prefix_list.append(output_prefix)
                 success_flag = f"{output_prefix}_success.txt"
@@ -779,6 +831,7 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
             all_cell_by_genes.append(cell_by_gene)
 
             mask = np.load(output_prefix + "_feature_mask.npy")
+            fov = pathlib.Path(output_prefix).name
             all_masks[fov] = xr.DataArray(mask, dims=("z", "y", "x"))
             all_masks[fov].encoding["chunks"] = mask.shape
             xmin, ymin, *_ = self.get_fov_pixel_extent_from_transcripts(fov=fov, padding=padding)
@@ -791,8 +844,9 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
         all_cell_by_genes = pd.concat(all_cell_by_genes)
         all_cell_by_genes.to_csv(final_cell_by_gene_temp_path)
 
-        all_masks = xr.Dataset(all_masks)
-        all_masks.to_zarr(final_cell_masks_temp_path)
+        for k, v in all_masks.items():
+            ds = xr.Dataset({"mask": v})
+            ds.to_zarr(final_cell_masks_temp_path / k)
 
         # move temporary files to final files
         final_meta_temp_path.rename(final_meta_path)
@@ -800,6 +854,9 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
         final_cell_masks_temp_path.rename(final_cell_masks_path)
 
         # delete temporary directory
-        # TODO
-        # shutil.rmtree(temp_dir, ignore_errors=True)
+        shutil.rmtree(temp_dir, ignore_errors=True)
         return
+
+    # TODO: add a function to get the cell segmentation results in squidpy adata format
+    # def get_adata(self):
+    #    pass

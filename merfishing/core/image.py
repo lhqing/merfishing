@@ -42,9 +42,14 @@ def project_image_z(image, z_projection):
 class MerfishMosaicImage:
     """Merfish mosaic image stored in zarr format."""
 
-    def __init__(self, zarr_path):
+    def __init__(self, zarr_path, use_threads=None):
         ds = xr.open_zarr(zarr_path)
-        self.image = ds[list(ds.data_vars.keys())[0]]
+        self.da_name = list(ds.data_vars.keys())[0]
+        self.image = ds[self.da_name]
+
+        # use_threads = False when reading zarr in multiprocessing mode
+        # see documentation here: https://zarr.readthedocs.io/en/stable/tutorial.html#configuring-blosc
+        self.image.encoding["compressor"].use_threads = use_threads
         return
 
     def get_image(self, z, y, x, load=True, projection=None, contrast=True):

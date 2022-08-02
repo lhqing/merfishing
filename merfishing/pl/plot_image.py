@@ -53,8 +53,14 @@ class MerfishImageAxesPlotter:
                     color = cmap(cnorm(bd.z_coords[int(z)]))
                     kwargs["color"] = color
                 line = self._transform.micron_to_pixel_transform(line)
-                x = line[0, :, 0]
-                y = line[0, :, 1]
+                if len(line.shape) == 3:
+                    x = line[0, :, 0]
+                    y = line[0, :, 1]
+                elif len(line.shape) == 2:
+                    x = line[:, 0]
+                    y = line[:, 1]
+                else:
+                    raise ValueError(f"line shape {line.shape} is not supported")
                 self.ax.plot(x - xmin, y - ymin, linewidth=linewidth, **kwargs)
                 if first_only:
                     break

@@ -13,6 +13,7 @@ from sklearn.metrics import pairwise_distances_chunked
 # Default microscope setting
 MICRON_PER_PIXEL = 0.108
 Z_SLICE_DISTANCE = 1.5
+NUM_Z_SLICES = 7
 VOXEL_VOLUME = MICRON_PER_PIXEL**2 * Z_SLICE_DISTANCE
 
 

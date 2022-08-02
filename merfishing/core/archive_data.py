@@ -102,7 +102,7 @@ class ArchiveMerfishRegion(MerfishRegionDirStructureMixin):
     """Archive MERFISH raw and output directories."""
 
     def __init__(self, region_dir):
-        super(MerfishRegionDirStructureMixin, self).__init__(region_dir)
+        super().__init__(region_dir, verbose=False)
 
         # execute the archive process
         self.prepare_archive()
@@ -147,8 +147,14 @@ class ArchiveMerfishRegion(MerfishRegionDirStructureMixin):
         """Save transcripts to HDF5 file."""
         output_path = self.transcripts_path
 
+        csv_path = self.region_dir / "detected_transcripts.csv"
+        if not csv_path.exists():
+            csv_path = self.region_dir / "detected_transcripts.csv.gz"
+            if not csv_path.exists():
+                raise FileNotFoundError(f"{csv_path} not found")
+
         transcripts = pd.read_csv(
-            self.region_dir / "detected_transcripts.csv",
+            csv_path,
             index_col=0,
             dtype={
                 "barcode_id": "uint16",
@@ -187,7 +193,7 @@ class ArchiveMerfishExperiment(MerfishExperimentDirStructureMixin):
     """Archive MERFISH raw and output directories."""
 
     def __init__(self, experiment_dir):
-        super(MerfishExperimentDirStructureMixin, self).__init__(experiment_dir)
+        super().__init__(experiment_dir, verbose=False)
 
         # execute the archive process
         self.prepare_archive()
