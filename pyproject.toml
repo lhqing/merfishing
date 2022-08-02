@@ -29,7 +29,9 @@ dependencies = [
     "xarray",
     "opencv-python",
     "shapely",
-    "matplotlib"
+    "matplotlib",
+    "cellpose",
+    "bigfish"
 ]
 
 [project.optional-dependencies]
@@ -54,7 +56,7 @@ test = [
     "opencv-python",
     "shapely",
     "matplotlib",
-    "bigfish",
+    "big-fish",
     "pytorch",
     "cellpose"
 ]
