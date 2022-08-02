@@ -4,6 +4,11 @@ This is a small package that provides customized analysis on MERFISH data genera
 
 Main features:
 
+-   Prepare archive of MERFISH experiment files
+-   Provide an entry point to analyze MERFISH data
+-   Analyze smFISH data and call spots with the [`bigfish`](https://github.com/fish-quant/big-fish) package
+-   Redo cell segmentation with the [`cellpose`](https://github.com/MouseLand/cellpose) package
 
 ```{tableofcontents}
+
 ```

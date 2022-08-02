@@ -1,0 +1,814 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>4. smFISH Spot Detection &#8212; MERFISHing</title>
+    
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" href="../_static/styles/sphinx-book-theme.css?digest=5115cc725059bd94278eecd172e13a965bf8f5a9" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/design-style.b7bb847fb20b106c3d81b95245e65545.min.css" />
+    
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
+
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/clipboard.min.js"></script>
+    <script src="../_static/copybutton.js"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?digest=9c920249402e914e316237a7dbc6769907cce411"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../_static/togglebutton.js"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
+    <script src="../_static/design-tabs.js"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"
+const thebe_selector = ".thebe,.cell"
+const thebe_selector_input = "pre"
+const thebe_selector_output = ".output, .cell_output"
+</script>
+    <script async="async" src="../_static/sphinx-thebe.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="5. Cellpose Segmentation" href="04.cellpose_segmentation.html" />
+    <link rel="prev" title="3. MERFISH Experiment Region Entry Point" href="02.entry_point.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="60">
+<!-- Checkboxes to toggle the left sidebar -->
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
+<label class="overlay overlay-navbar" for="__navigation">
+    <div class="visually-hidden">Toggle navigation sidebar</div>
+</label>
+<!-- Checkboxes to toggle the in-page toc -->
+<input type="checkbox" class="sidebar-toggle" name="__page-toc" id="__page-toc" aria-label="Toggle in-page Table of Contents">
+<label class="overlay overlay-pagetoc" for="__page-toc">
+    <div class="visually-hidden">Toggle in-page Table of Contents</div>
+</label>
+<!-- Headers at the top -->
+<div class="announcement header-item noprint"></div>
+<div class="header header-item noprint"></div>
+
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<!-- Sidebar -->
+<div class="bd-sidebar noprint" id="site-navigation">
+    <div class="bd-sidebar__content">
+        <div class="bd-sidebar__top"><div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="../index.html">
+      
+      
+      
+      <h1 class="site-logo" id="site-title">MERFISHing</h1>
+      
+    </a>
+</div><form class="bd-search d-flex align-items-center" action="../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search this book..." aria-label="Search this book..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="../intro.html">
+                    MERFISHing
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  User Guide
+ </span>
+</p>
+<ul class="current nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="00.start.html">
+   1. Before Start
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="01.prepare_archive.html">
+   2. Archive MERFISH Experiment
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="02.entry_point.html">
+   3. MERFISH Experiment Region Entry Point
+  </a>
+ </li>
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
+   4. smFISH Spot Detection
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="04.cellpose_segmentation.html">
+   5. Cellpose Segmentation
+  </a>
+ </li>
+</ul>
+
+    </div>
+</nav></div>
+        <div class="bd-sidebar__bottom">
+             <!-- To handle the deprecated key -->
+            
+            <div class="navbar_extra_footer">
+            Powered by <a href="https://jupyterbook.org">Jupyter Book</a>
+            </div>
+            
+        </div>
+    </div>
+    <div id="rtd-footer-container"></div>
+</div>
+
+
+          
+
+
+          
+<!-- A tiny helper pixel to detect if we've scrolled -->
+<div class="sbt-scroll-pixel-helper"></div>
+<!-- Main content -->
+<div class="col py-0 content-container">
+    
+    <div class="header-article row sticky-top noprint">
+        
+
+
+
+<div class="col py-1 d-flex header-article-main">
+    <div class="header-article__left">
+        
+        <label for="__navigation"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="right"
+title="Toggle navigation"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-bars"></i>
+  </span>
+
+</label>
+
+        
+    </div>
+    <div class="header-article__right">
+<div class="menu-dropdown menu-dropdown-launch-buttons">
+  <button class="headerbtn menu-dropdown__trigger"
+      aria-label="Launch interactive content">
+      <i class="fas fa-rocket"></i>
+  </button>
+  <div class="menu-dropdown__content">
+    <ul>
+      <li>
+        <a href="https://mybinder.org/v2/gh/executablebooks/jupyter-book/master?urlpath=tree/docs/user_guide/03.detect_smfish_spots.ipynb"
+   class="headerbtn"
+   data-toggle="tooltip"
+data-placement="left"
+title="Launch on Binder"
+>
+  
+
+<span class="headerbtn__icon-container">
+  
+    <img src="../_static/images/logo_binder.svg">
+  </span>
+<span class="headerbtn__text-container">Binder</span>
+</a>
+
+      </li>
+      
+    </ul>
+  </div>
+</div>
+
+<button onclick="toggleFullScreen()"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="bottom"
+title="Fullscreen mode"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+<div class="menu-dropdown menu-dropdown-repository-buttons">
+  <button class="headerbtn menu-dropdown__trigger"
+      aria-label="Source repositories">
+      <i class="fab fa-github"></i>
+  </button>
+  <div class="menu-dropdown__content">
+    <ul>
+      <li>
+        <a href="https://github.com/executablebooks/jupyter-book"
+   class="headerbtn"
+   data-toggle="tooltip"
+data-placement="left"
+title="Source repository"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="headerbtn__text-container">repository</span>
+</a>
+
+      </li>
+      
+      <li>
+        <a href="https://github.com/executablebooks/jupyter-book/issues/new?title=Issue%20on%20page%20%2Fuser_guide/03.detect_smfish_spots.html&body=Your%20issue%20content%20here."
+   class="headerbtn"
+   data-toggle="tooltip"
+data-placement="left"
+title="Open an issue"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="headerbtn__text-container">open issue</span>
+</a>
+
+      </li>
+      
+    </ul>
+  </div>
+</div>
+
+<div class="menu-dropdown menu-dropdown-download-buttons">
+  <button class="headerbtn menu-dropdown__trigger"
+      aria-label="Download this page">
+      <i class="fas fa-download"></i>
+  </button>
+  <div class="menu-dropdown__content">
+    <ul>
+      <li>
+        <a href="../_sources/user_guide/03.detect_smfish_spots.ipynb"
+   class="headerbtn"
+   data-toggle="tooltip"
+data-placement="left"
+title="Download source file"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="headerbtn__text-container">.ipynb</span>
+</a>
+
+      </li>
+      
+      <li>
+        
+<button onclick="printPdf(this)"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="left"
+title="Print to PDF"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="headerbtn__text-container">.pdf</span>
+</button>
+
+      </li>
+      
+    </ul>
+  </div>
+</div>
+<label for="__page-toc"
+  class="headerbtn headerbtn-page-toc"
+  
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-list"></i>
+  </span>
+
+</label>
+
+    </div>
+</div>
+
+<!-- Table of contents -->
+<div class="col-md-3 bd-toc show noprint">
+    <div class="tocsection onthispage pt-5 pb-3">
+        <i class="fas fa-list"></i> Contents
+    </div>
+    <nav id="bd-toc-nav" aria-label="Page">
+        <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#entry-point">
+   4.1. Entry Point
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#call-spots">
+   4.2. Call Spots
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#plot">
+   4.3. Plot
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#transcripts">
+   4.4. Transcripts
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#details-bigfish-package">
+   4.5. Details - BigFish Package
+  </a>
+ </li>
+</ul>
+
+    </nav>
+</div>
+    </div>
+    <div class="article row">
+        <div class="col pl-md-3 pl-lg-5 content-container">
+            <!-- Table of contents that is only displayed when printing the page -->
+            <div id="jb-print-docs-body" class="onlyprint">
+                <h1>smFISH Spot Detection</h1>
+                <!-- Table of contents -->
+                <div id="print-main-content">
+                    <div id="jb-print-toc">
+                        
+                        <div>
+                            <h2> Contents </h2>
+                        </div>
+                        <nav aria-label="Page">
+                            <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#entry-point">
+   4.1. Entry Point
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#call-spots">
+   4.2. Call Spots
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#plot">
+   4.3. Plot
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#transcripts">
+   4.4. Transcripts
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#details-bigfish-package">
+   4.5. Details - BigFish Package
+  </a>
+ </li>
+</ul>
+
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            <main id="main-content" role="main">
+                
+              <div>
+                
+  <div class="tex2jax_ignore mathjax_ignore section" id="smfish-spot-detection">
+<h1><span class="section-number">4. </span>smFISH Spot Detection<a class="headerlink" href="#smfish-spot-detection" title="Permalink to this headline">#</a></h1>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">merfishing</span> <span class="kn">import</span> <span class="n">Merfish</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="entry-point">
+<h2><span class="section-number">4.1. </span>Entry Point<a class="headerlink" href="#entry-point" title="Permalink to this headline">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">merfish</span> <span class="o">=</span> <span class="n">Merfish</span><span class="p">(</span><span class="s1">&#39;dummy_experiment/output/region_0/&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>MERFISH Experiment Region
+Region data located at /gale/netapp/cemba3c/merfish/example/dummy_experiment/output/region_0
+Experiment dir located at /gale/netapp/cemba3c/merfish/example/dummy_experiment
+/gale/netapp/cemba3c/merfish/example/dummy_experiment/output/region_0 does not contain cellpose results or the results are incomplete, using watershed results from vizgen pipeline instead.
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="call-spots">
+<h2><span class="section-number">4.2. </span>Call Spots<a class="headerlink" href="#call-spots" title="Permalink to this headline">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">merfish</span><span class="o">.</span><span class="n">smfish_genes</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[&#39;Snap25&#39;, &#39;Mbp&#39;]
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">merfish</span><span class="o">.</span><span class="n">call_spots</span><span class="p">(</span>
+    <span class="n">image_names</span><span class="o">=</span><span class="s1">&#39;all&#39;</span><span class="p">,</span>
+    <span class="n">cpu</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span>
+    <span class="n">padding</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+    <span class="n">detect_dense</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">projection</span><span class="o">=</span><span class="s1">&#39;max&#39;</span><span class="p">,</span>
+    <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">redo</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="plot">
+<h2><span class="section-number">4.3. </span>Plot<a class="headerlink" href="#plot" title="Permalink to this headline">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">merfish</span><span class="o">.</span><span class="n">plot_fov</span><span class="p">(</span>
+    <span class="mi">0</span><span class="p">,</span>
+    <span class="n">n_cols</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+    <span class="n">image_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;PolyT+Snap25+DAPI&#39;</span><span class="p">,</span> <span class="s1">&#39;PolyT&#39;</span><span class="p">,</span> <span class="s1">&#39;DAPI&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">merfish</span><span class="o">.</span><span class="n">smfish_genes</span><span class="p">,</span>
+    <span class="n">genes</span><span class="o">=</span><span class="n">merfish</span><span class="o">.</span><span class="n">smfish_genes</span><span class="p">,</span>
+    <span class="n">dpi</span><span class="o">=</span><span class="mi">150</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/03.detect_smfish_spots_8_0.png" src="../_images/03.detect_smfish_spots_8_0.png" />
+</div>
+</div>
+</div>
+<div class="section" id="transcripts">
+<h2><span class="section-number">4.4. </span>Transcripts<a class="headerlink" href="#transcripts" title="Permalink to this headline">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">transcripts</span> <span class="o">=</span> <span class="n">merfish</span><span class="o">.</span><span class="n">get_transcripts</span><span class="p">(</span><span class="n">fov</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="n">transcripts</span><span class="p">[</span><span class="n">transcripts</span><span class="p">[</span><span class="s1">&#39;gene&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">merfish</span><span class="o">.</span><span class="n">smfish_genes</span><span class="p">)]</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_html"><div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>barcode_id</th>
+      <th>global_x</th>
+      <th>global_y</th>
+      <th>global_z</th>
+      <th>x</th>
+      <th>y</th>
+      <th>fov</th>
+      <th>gene</th>
+      <th>transcript_id</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>550</td>
+      <td>285.535095</td>
+      <td>2393.415283</td>
+      <td>0</td>
+      <td>117.057625</td>
+      <td>-253.842117</td>
+      <td>0</td>
+      <td>Snap25</td>
+      <td>ENSMUST00000028727</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>550</td>
+      <td>286.183105</td>
+      <td>2393.415283</td>
+      <td>0</td>
+      <td>117.705612</td>
+      <td>-253.842117</td>
+      <td>0</td>
+      <td>Snap25</td>
+      <td>ENSMUST00000028727</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>550</td>
+      <td>295.794952</td>
+      <td>2393.415283</td>
+      <td>0</td>
+      <td>127.317474</td>
+      <td>-253.842117</td>
+      <td>0</td>
+      <td>Snap25</td>
+      <td>ENSMUST00000028727</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>550</td>
+      <td>303.894836</td>
+      <td>2393.415283</td>
+      <td>0</td>
+      <td>135.417358</td>
+      <td>-253.842117</td>
+      <td>0</td>
+      <td>Snap25</td>
+      <td>ENSMUST00000028727</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>550</td>
+      <td>276.679230</td>
+      <td>2393.631348</td>
+      <td>0</td>
+      <td>108.201759</td>
+      <td>-253.626114</td>
+      <td>0</td>
+      <td>Snap25</td>
+      <td>ENSMUST00000028727</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>1552</th>
+      <td>551</td>
+      <td>296.550934</td>
+      <td>2531.545166</td>
+      <td>5</td>
+      <td>128.073456</td>
+      <td>-115.712135</td>
+      <td>0</td>
+      <td>Mbp</td>
+      <td>ENSMUST00000133193</td>
+    </tr>
+    <tr>
+      <th>1553</th>
+      <td>551</td>
+      <td>288.775055</td>
+      <td>2531.977295</td>
+      <td>5</td>
+      <td>120.297577</td>
+      <td>-115.280144</td>
+      <td>0</td>
+      <td>Mbp</td>
+      <td>ENSMUST00000133193</td>
+    </tr>
+    <tr>
+      <th>1554</th>
+      <td>551</td>
+      <td>277.327240</td>
+      <td>2532.301270</td>
+      <td>5</td>
+      <td>108.849747</td>
+      <td>-114.956146</td>
+      <td>0</td>
+      <td>Mbp</td>
+      <td>ENSMUST00000133193</td>
+    </tr>
+    <tr>
+      <th>1555</th>
+      <td>551</td>
+      <td>273.547272</td>
+      <td>2532.409180</td>
+      <td>5</td>
+      <td>105.069801</td>
+      <td>-114.848145</td>
+      <td>0</td>
+      <td>Mbp</td>
+      <td>ENSMUST00000133193</td>
+    </tr>
+    <tr>
+      <th>1556</th>
+      <td>551</td>
+      <td>297.630920</td>
+      <td>2532.301270</td>
+      <td>5</td>
+      <td>129.153442</td>
+      <td>-114.956146</td>
+      <td>0</td>
+      <td>Mbp</td>
+      <td>ENSMUST00000133193</td>
+    </tr>
+  </tbody>
+</table>
+<p>15264 rows × 9 columns</p>
+</div></div></div>
+</div>
+</div>
+<div class="section" id="details-bigfish-package">
+<h2><span class="section-number">4.5. </span>Details - BigFish Package<a class="headerlink" href="#details-bigfish-package" title="Permalink to this headline">#</a></h2>
+<p>Spot detection is done by the bigfish package with its automatic pipeline and default parameters. Each z-plane is run separately. Please read the bigfish package for more details and fine tune the parameter if needed. You can pass the key parameters to merfish.call_spots function.</p>
+<ul class="simple">
+<li><p>Github: <a class="reference external" href="https://github.com/fish-quant/big-fish">https://github.com/fish-quant/big-fish</a></p></li>
+<li><p>Documentation: <a class="reference external" href="https://big-fish.readthedocs.io/en/stable/index.html">https://big-fish.readthedocs.io/en/stable/index.html</a></p></li>
+<li><p>Jupyter Notebook Example: <a class="reference external" href="https://github.com/fish-quant/big-fish-examples/tree/master/notebooks">https://github.com/fish-quant/big-fish-examples/tree/master/notebooks</a></p></li>
+</ul>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">bigfish.stack</span> <span class="kn">import</span> <span class="n">maximum_projection</span>
+<span class="kn">from</span> <span class="nn">bigfish.plot</span> <span class="kn">import</span> <span class="n">plot_detection</span><span class="p">,</span> <span class="n">plot_images</span>
+<span class="kn">from</span> <span class="nn">bigfish.detection</span> <span class="kn">import</span> <span class="n">detect_spots</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">image</span> <span class="o">=</span> <span class="n">merfish</span><span class="o">.</span><span class="n">get_image_fov</span><span class="p">(</span><span class="s1">&#39;Snap25&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">plot_images</span><span class="p">(</span><span class="n">maximum_projection</span><span class="p">(</span><span class="n">image</span><span class="p">),</span> <span class="n">contrast</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">framesize</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/03.detect_smfish_spots_13_0.png" src="../_images/03.detect_smfish_spots_13_0.png" />
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">spots</span><span class="p">,</span> <span class="n">threshold</span> <span class="o">=</span> <span class="n">detect_spots</span><span class="p">(</span>
+    <span class="n">images</span><span class="o">=</span><span class="n">image</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span>
+    <span class="n">return_threshold</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">voxel_size</span><span class="o">=</span><span class="p">(</span><span class="mi">103</span><span class="p">,</span> <span class="mi">103</span><span class="p">),</span>  <span class="c1"># in nanometer (one value per dimension zyx)</span>
+    <span class="n">spot_radius</span><span class="o">=</span><span class="p">(</span><span class="mi">150</span><span class="p">,</span> <span class="mi">150</span><span class="p">))</span>  <span class="c1"># in nanometer (one value per dimension zyx)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;detected spots&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\r</span><span class="s2"> shape: </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">spots</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\r</span><span class="s2"> dtype: </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">spots</span><span class="o">.</span><span class="n">dtype</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\r</span><span class="s2"> threshold: </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">threshold</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>detected spots
+
+ shape: (3100, 2)
+
+ dtype: int64
+
+ threshold: 226.0
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_detection</span><span class="p">(</span><span class="n">image</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">spots</span><span class="p">,</span> <span class="n">contrast</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">framesize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="n">radius</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/03.detect_smfish_spots_15_0.png" src="../_images/03.detect_smfish_spots_15_0.png" />
+</div>
+</div>
+</div>
+</div>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            kernelName: "python3",
+            path: "./user_guide"
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+              </div>
+              
+            </main>
+            <footer class="footer-article noprint">
+                
+    <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+    <a class='left-prev' id="prev-link" href="02.entry_point.html" title="previous page">
+        <i class="fas fa-angle-left"></i>
+        <div class="prev-next-info">
+            <p class="prev-next-subtitle">previous</p>
+            <p class="prev-next-title"><span class="section-number">3. </span>MERFISH Experiment Region Entry Point</p>
+        </div>
+    </a>
+    <a class='right-next' id="next-link" href="04.cellpose_segmentation.html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title"><span class="section-number">5. </span>Cellpose Segmentation</p>
+    </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
+</div>
+            </footer>
+        </div>
+    </div>
+    <div class="footer-content row">
+        <footer class="col footer"><p>
+  
+    By Hanqing Liu<br/>
+  
+      &copy; Copyright 2022.<br/>
+</p>
+        </footer>
+    </div>
+    
+</div>
+
+
+      </div>
+    </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
+
+
+  </body>
+</html>

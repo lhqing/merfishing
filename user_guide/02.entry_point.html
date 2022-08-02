@@ -1,0 +1,1206 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3. MERFISH Experiment Region Entry Point &#8212; MERFISHing</title>
+    
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" href="../_static/styles/sphinx-book-theme.css?digest=5115cc725059bd94278eecd172e13a965bf8f5a9" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-thebe.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/design-style.b7bb847fb20b106c3d81b95245e65545.min.css" />
+    
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
+
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/clipboard.min.js"></script>
+    <script src="../_static/copybutton.js"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?digest=9c920249402e914e316237a7dbc6769907cce411"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../_static/togglebutton.js"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
+    <script src="../_static/design-tabs.js"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"
+const thebe_selector = ".thebe,.cell"
+const thebe_selector_input = "pre"
+const thebe_selector_output = ".output, .cell_output"
+</script>
+    <script async="async" src="../_static/sphinx-thebe.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="4. smFISH Spot Detection" href="03.detect_smfish_spots.html" />
+    <link rel="prev" title="2. Archive MERFISH Experiment" href="01.prepare_archive.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="60">
+<!-- Checkboxes to toggle the left sidebar -->
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
+<label class="overlay overlay-navbar" for="__navigation">
+    <div class="visually-hidden">Toggle navigation sidebar</div>
+</label>
+<!-- Checkboxes to toggle the in-page toc -->
+<input type="checkbox" class="sidebar-toggle" name="__page-toc" id="__page-toc" aria-label="Toggle in-page Table of Contents">
+<label class="overlay overlay-pagetoc" for="__page-toc">
+    <div class="visually-hidden">Toggle in-page Table of Contents</div>
+</label>
+<!-- Headers at the top -->
+<div class="announcement header-item noprint"></div>
+<div class="header header-item noprint"></div>
+
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<!-- Sidebar -->
+<div class="bd-sidebar noprint" id="site-navigation">
+    <div class="bd-sidebar__content">
+        <div class="bd-sidebar__top"><div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="../index.html">
+      
+      
+      
+      <h1 class="site-logo" id="site-title">MERFISHing</h1>
+      
+    </a>
+</div><form class="bd-search d-flex align-items-center" action="../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search this book..." aria-label="Search this book..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="../intro.html">
+                    MERFISHing
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  User Guide
+ </span>
+</p>
+<ul class="current nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="00.start.html">
+   1. Before Start
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="01.prepare_archive.html">
+   2. Archive MERFISH Experiment
+  </a>
+ </li>
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
+   3. MERFISH Experiment Region Entry Point
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="03.detect_smfish_spots.html">
+   4. smFISH Spot Detection
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="04.cellpose_segmentation.html">
+   5. Cellpose Segmentation
+  </a>
+ </li>
+</ul>
+
+    </div>
+</nav></div>
+        <div class="bd-sidebar__bottom">
+             <!-- To handle the deprecated key -->
+            
+            <div class="navbar_extra_footer">
+            Powered by <a href="https://jupyterbook.org">Jupyter Book</a>
+            </div>
+            
+        </div>
+    </div>
+    <div id="rtd-footer-container"></div>
+</div>
+
+
+          
+
+
+          
+<!-- A tiny helper pixel to detect if we've scrolled -->
+<div class="sbt-scroll-pixel-helper"></div>
+<!-- Main content -->
+<div class="col py-0 content-container">
+    
+    <div class="header-article row sticky-top noprint">
+        
+
+
+
+<div class="col py-1 d-flex header-article-main">
+    <div class="header-article__left">
+        
+        <label for="__navigation"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="right"
+title="Toggle navigation"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-bars"></i>
+  </span>
+
+</label>
+
+        
+    </div>
+    <div class="header-article__right">
+<div class="menu-dropdown menu-dropdown-launch-buttons">
+  <button class="headerbtn menu-dropdown__trigger"
+      aria-label="Launch interactive content">
+      <i class="fas fa-rocket"></i>
+  </button>
+  <div class="menu-dropdown__content">
+    <ul>
+      <li>
+        <a href="https://mybinder.org/v2/gh/executablebooks/jupyter-book/master?urlpath=tree/docs/user_guide/02.entry_point.ipynb"
+   class="headerbtn"
+   data-toggle="tooltip"
+data-placement="left"
+title="Launch on Binder"
+>
+  
+
+<span class="headerbtn__icon-container">
+  
+    <img src="../_static/images/logo_binder.svg">
+  </span>
+<span class="headerbtn__text-container">Binder</span>
+</a>
+
+      </li>
+      
+    </ul>
+  </div>
+</div>
+
+<button onclick="toggleFullScreen()"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="bottom"
+title="Fullscreen mode"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+<div class="menu-dropdown menu-dropdown-repository-buttons">
+  <button class="headerbtn menu-dropdown__trigger"
+      aria-label="Source repositories">
+      <i class="fab fa-github"></i>
+  </button>
+  <div class="menu-dropdown__content">
+    <ul>
+      <li>
+        <a href="https://github.com/executablebooks/jupyter-book"
+   class="headerbtn"
+   data-toggle="tooltip"
+data-placement="left"
+title="Source repository"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="headerbtn__text-container">repository</span>
+</a>
+
+      </li>
+      
+      <li>
+        <a href="https://github.com/executablebooks/jupyter-book/issues/new?title=Issue%20on%20page%20%2Fuser_guide/02.entry_point.html&body=Your%20issue%20content%20here."
+   class="headerbtn"
+   data-toggle="tooltip"
+data-placement="left"
+title="Open an issue"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="headerbtn__text-container">open issue</span>
+</a>
+
+      </li>
+      
+    </ul>
+  </div>
+</div>
+
+<div class="menu-dropdown menu-dropdown-download-buttons">
+  <button class="headerbtn menu-dropdown__trigger"
+      aria-label="Download this page">
+      <i class="fas fa-download"></i>
+  </button>
+  <div class="menu-dropdown__content">
+    <ul>
+      <li>
+        <a href="../_sources/user_guide/02.entry_point.ipynb"
+   class="headerbtn"
+   data-toggle="tooltip"
+data-placement="left"
+title="Download source file"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="headerbtn__text-container">.ipynb</span>
+</a>
+
+      </li>
+      
+      <li>
+        
+<button onclick="printPdf(this)"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="left"
+title="Print to PDF"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="headerbtn__text-container">.pdf</span>
+</button>
+
+      </li>
+      
+    </ul>
+  </div>
+</div>
+<label for="__page-toc"
+  class="headerbtn headerbtn-page-toc"
+  
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-list"></i>
+  </span>
+
+</label>
+
+    </div>
+</div>
+
+<!-- Table of contents -->
+<div class="col-md-3 bd-toc show noprint">
+    <div class="tocsection onthispage pt-5 pb-3">
+        <i class="fas fa-list"></i> Contents
+    </div>
+    <nav id="bd-toc-nav" aria-label="Page">
+        <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#goals">
+   3.1. Goals
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#main-entry-point">
+   3.2. Main Entry Point
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#get-info">
+   3.3. Get Info
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#transform-coordinates">
+   3.4. Transform Coordinates
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#four-kinds-of-coordinates-and-their-transformation">
+     3.4.1. Four kinds of coordinates and their transformation
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#transform-helper">
+     3.4.2. Transform Helper
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#make-plots">
+   3.5. Make Plots
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#more-control-on-images">
+   3.6. More control on images
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#plot-transcripts">
+     3.6.1. Plot transcripts
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#plot-other-smfish-images">
+     3.6.2. plot other smFISH Images
+    </a>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+    </nav>
+</div>
+    </div>
+    <div class="article row">
+        <div class="col pl-md-3 pl-lg-5 content-container">
+            <!-- Table of contents that is only displayed when printing the page -->
+            <div id="jb-print-docs-body" class="onlyprint">
+                <h1>MERFISH Experiment Region Entry Point</h1>
+                <!-- Table of contents -->
+                <div id="print-main-content">
+                    <div id="jb-print-toc">
+                        
+                        <div>
+                            <h2> Contents </h2>
+                        </div>
+                        <nav aria-label="Page">
+                            <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#goals">
+   3.1. Goals
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#main-entry-point">
+   3.2. Main Entry Point
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#get-info">
+   3.3. Get Info
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#transform-coordinates">
+   3.4. Transform Coordinates
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#four-kinds-of-coordinates-and-their-transformation">
+     3.4.1. Four kinds of coordinates and their transformation
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#transform-helper">
+     3.4.2. Transform Helper
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#make-plots">
+   3.5. Make Plots
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#more-control-on-images">
+   3.6. More control on images
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#plot-transcripts">
+     3.6.1. Plot transcripts
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#plot-other-smfish-images">
+     3.6.2. plot other smFISH Images
+    </a>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            <main id="main-content" role="main">
+                
+              <div>
+                
+  <div class="tex2jax_ignore mathjax_ignore section" id="merfish-experiment-region-entry-point">
+<h1><span class="section-number">3. </span>MERFISH Experiment Region Entry Point<a class="headerlink" href="#merfish-experiment-region-entry-point" title="Permalink to this headline">#</a></h1>
+<div class="section" id="goals">
+<h2><span class="section-number">3.1. </span>Goals<a class="headerlink" href="#goals" title="Permalink to this headline">#</a></h2>
+<ul class="simple">
+<li><p>Provide a single entry point for a MERFISH experiment region</p></li>
+<li><p>Simple API for retriving file and experimental information</p></li>
+<li><p>Plot MERFISH transcripts together with DAPI, PolyT and other smFISH images</p></li>
+</ul>
+</div>
+<div class="section" id="main-entry-point">
+<h2><span class="section-number">3.2. </span>Main Entry Point<a class="headerlink" href="#main-entry-point" title="Permalink to this headline">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">merfishing</span> <span class="kn">import</span> <span class="n">Merfish</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">merfish</span> <span class="o">=</span> <span class="n">Merfish</span><span class="p">(</span><span class="s1">&#39;dummy_experiment/output/region_0/&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>MERFISH Experiment Region
+Region data located at /gale/netapp/cemba3c/merfish/example/dummy_experiment/output/region_0
+Experiment dir located at /gale/netapp/cemba3c/merfish/example/dummy_experiment
+/gale/netapp/cemba3c/merfish/example/dummy_experiment/output/region_0 does not contain cellpose results or the results are incomplete, using watershed results from vizgen pipeline instead.
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="get-info">
+<h2><span class="section-number">3.3. </span>Get Info<a class="headerlink" href="#get-info" title="Permalink to this headline">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># field of view id</span>
+<span class="n">fov</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="c1"># padding in pixel to add to the image boarder</span>
+<span class="n">padding</span> <span class="o">=</span> <span class="mi">150</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># get FOV cell meta</span>
+<span class="n">cell_meta</span> <span class="o">=</span> <span class="n">merfish</span><span class="o">.</span><span class="n">get_cell_metadata</span><span class="p">(</span><span class="n">fov</span><span class="o">=</span><span class="n">fov</span><span class="p">)</span>
+
+<span class="c1"># get FOV cell boundaries</span>
+<span class="n">boundaries</span> <span class="o">=</span> <span class="n">merfish</span><span class="o">.</span><span class="n">get_cell_boundaries</span><span class="p">(</span><span class="n">fov</span><span class="o">=</span><span class="n">fov</span><span class="p">)</span>
+
+<span class="c1"># get FOV transcripts</span>
+<span class="n">transcripts</span> <span class="o">=</span> <span class="n">merfish</span><span class="o">.</span><span class="n">get_transcripts</span><span class="p">(</span><span class="n">fov</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cell_meta</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_html"><div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>fov</th>
+      <th>volume</th>
+      <th>center_x</th>
+      <th>center_y</th>
+      <th>min_x</th>
+      <th>max_x</th>
+      <th>min_y</th>
+      <th>max_y</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>124059131287748509520752689217573234598</th>
+      <td>0</td>
+      <td>733.659806</td>
+      <td>280.461963</td>
+      <td>2399.439158</td>
+      <td>274.197963</td>
+      <td>286.725963</td>
+      <td>2391.339158</td>
+      <td>2407.539159</td>
+    </tr>
+    <tr>
+      <th>124436133021557870166867524905466212748</th>
+      <td>0</td>
+      <td>304.041130</td>
+      <td>306.381964</td>
+      <td>2501.283161</td>
+      <td>301.413964</td>
+      <td>311.349964</td>
+      <td>2497.395161</td>
+      <td>2505.171161</td>
+    </tr>
+    <tr>
+      <th>138776182618754649880225222913501206037</th>
+      <td>0</td>
+      <td>311.577532</td>
+      <td>302.223964</td>
+      <td>2495.019161</td>
+      <td>296.445964</td>
+      <td>308.001964</td>
+      <td>2488.539161</td>
+      <td>2501.499161</td>
+    </tr>
+    <tr>
+      <th>145005692207541910116913385133261169729</th>
+      <td>0</td>
+      <td>1119.306658</td>
+      <td>278.895963</td>
+      <td>2444.043160</td>
+      <td>269.877963</td>
+      <td>287.913964</td>
+      <td>2435.727159</td>
+      <td>2452.359160</td>
+    </tr>
+    <tr>
+      <th>169795232385260290859218448407072971352</th>
+      <td>0</td>
+      <td>521.284599</td>
+      <td>306.597964</td>
+      <td>2492.751161</td>
+      <td>301.413964</td>
+      <td>311.781964</td>
+      <td>2486.703161</td>
+      <td>2498.799161</td>
+    </tr>
+    <tr>
+      <th>178143416887932403186631175718891022064</th>
+      <td>0</td>
+      <td>267.566342</td>
+      <td>294.231964</td>
+      <td>2424.333159</td>
+      <td>289.317964</td>
+      <td>299.145964</td>
+      <td>2420.607159</td>
+      <td>2428.059159</td>
+    </tr>
+    <tr>
+      <th>222239292118322505683048722379758116735</th>
+      <td>0</td>
+      <td>372.463615</td>
+      <td>281.865963</td>
+      <td>2470.449160</td>
+      <td>277.329963</td>
+      <td>286.401963</td>
+      <td>2465.859160</td>
+      <td>2475.039160</td>
+    </tr>
+    <tr>
+      <th>228416963106068770964479979131547418808</th>
+      <td>0</td>
+      <td>1578.965968</td>
+      <td>303.573964</td>
+      <td>2440.911159</td>
+      <td>295.905964</td>
+      <td>311.241964</td>
+      <td>2432.055159</td>
+      <td>2449.767160</td>
+    </tr>
+    <tr>
+      <th>267309588870324834273540950593508282409</th>
+      <td>0</td>
+      <td>464.580060</td>
+      <td>274.521963</td>
+      <td>2417.853159</td>
+      <td>269.985963</td>
+      <td>279.057963</td>
+      <td>2413.263159</td>
+      <td>2422.443159</td>
+    </tr>
+    <tr>
+      <th>295182315189729408205630822858763076751</th>
+      <td>0</td>
+      <td>2.449440</td>
+      <td>310.647964</td>
+      <td>2514.405161</td>
+      <td>310.053964</td>
+      <td>311.241964</td>
+      <td>2512.191161</td>
+      <td>2516.619161</td>
+    </tr>
+    <tr>
+      <th>324898700350739488878179092763503871302</th>
+      <td>0</td>
+      <td>428.687014</td>
+      <td>290.235964</td>
+      <td>2490.159161</td>
+      <td>285.969963</td>
+      <td>294.501964</td>
+      <td>2484.651161</td>
+      <td>2495.667161</td>
+    </tr>
+    <tr>
+      <th>325594716403436894083424151289809835051</th>
+      <td>0</td>
+      <td>2015.399337</td>
+      <td>280.461963</td>
+      <td>2520.237162</td>
+      <td>270.633963</td>
+      <td>290.289964</td>
+      <td>2510.679161</td>
+      <td>2529.795162</td>
+    </tr>
+    <tr>
+      <th>32749162482497951254088627751199223791</th>
+      <td>0</td>
+      <td>179.823897</td>
+      <td>285.483963</td>
+      <td>2503.011161</td>
+      <td>280.245963</td>
+      <td>290.721964</td>
+      <td>2498.583161</td>
+      <td>2507.439161</td>
+    </tr>
+    <tr>
+      <th>33683436332347708689024264839442433156</th>
+      <td>0</td>
+      <td>823.204339</td>
+      <td>274.143963</td>
+      <td>2474.391160</td>
+      <td>268.041963</td>
+      <td>280.245963</td>
+      <td>2468.451160</td>
+      <td>2480.331160</td>
+    </tr>
+    <tr>
+      <th>79357720784388128471537864170375678149</th>
+      <td>0</td>
+      <td>79.108168</td>
+      <td>302.817964</td>
+      <td>2426.763159</td>
+      <td>299.253964</td>
+      <td>306.381964</td>
+      <td>2423.847159</td>
+      <td>2429.679159</td>
+    </tr>
+  </tbody>
+</table>
+</div></div></div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">boundaries</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>{&#39;124059131287748509520752689217573234598&#39;: &lt;merfishing.core.boundary.CellBoundary at 0x7f98ce080490&gt;,
+ &#39;124436133021557870166867524905466212748&#39;: &lt;merfishing.core.boundary.CellBoundary at 0x7f98ce067370&gt;,
+ &#39;138776182618754649880225222913501206037&#39;: &lt;merfishing.core.boundary.CellBoundary at 0x7f98ce067f70&gt;,
+ &#39;145005692207541910116913385133261169729&#39;: &lt;merfishing.core.boundary.CellBoundary at 0x7f98ce0804c0&gt;,
+ &#39;169795232385260290859218448407072971352&#39;: &lt;merfishing.core.boundary.CellBoundary at 0x7f98cdc6f4f0&gt;,
+ &#39;178143416887932403186631175718891022064&#39;: &lt;merfishing.core.boundary.CellBoundary at 0x7f98cdc6f820&gt;,
+ &#39;222239292118322505683048722379758116735&#39;: &lt;merfishing.core.boundary.CellBoundary at 0x7f98cdc6f850&gt;,
+ &#39;228416963106068770964479979131547418808&#39;: &lt;merfishing.core.boundary.CellBoundary at 0x7f98cdc6fa00&gt;,
+ &#39;267309588870324834273540950593508282409&#39;: &lt;merfishing.core.boundary.CellBoundary at 0x7f98cdc6fac0&gt;,
+ &#39;295182315189729408205630822858763076751&#39;: &lt;merfishing.core.boundary.CellBoundary at 0x7f98cdc6fb80&gt;,
+ &#39;324898700350739488878179092763503871302&#39;: &lt;merfishing.core.boundary.CellBoundary at 0x7f98cdc6f490&gt;,
+ &#39;325594716403436894083424151289809835051&#39;: &lt;merfishing.core.boundary.CellBoundary at 0x7f98cdc6fd00&gt;,
+ &#39;32749162482497951254088627751199223791&#39;: &lt;merfishing.core.boundary.CellBoundary at 0x7f98cdc6fdc0&gt;,
+ &#39;33683436332347708689024264839442433156&#39;: &lt;merfishing.core.boundary.CellBoundary at 0x7f98cdc6fe80&gt;,
+ &#39;79357720784388128471537864170375678149&#39;: &lt;merfishing.core.boundary.CellBoundary at 0x7f98cdc6ff40&gt;}
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">transcripts</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_html"><div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>barcode_id</th>
+      <th>global_x</th>
+      <th>global_y</th>
+      <th>global_z</th>
+      <th>x</th>
+      <th>y</th>
+      <th>fov</th>
+      <th>gene</th>
+      <th>transcript_id</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>664215</th>
+      <td>175</td>
+      <td>302.003265</td>
+      <td>2422.750000</td>
+      <td>4</td>
+      <td>1923.456421</td>
+      <td>978.842041</td>
+      <td>0</td>
+      <td>Prkca</td>
+      <td>ENSMUST00000059595</td>
+    </tr>
+    <tr>
+      <th>337701</th>
+      <td>88</td>
+      <td>296.153534</td>
+      <td>2438.967041</td>
+      <td>1</td>
+      <td>1869.292480</td>
+      <td>1129.000000</td>
+      <td>0</td>
+      <td>Stac</td>
+      <td>ENSMUST00000035083</td>
+    </tr>
+    <tr>
+      <th>337697</th>
+      <td>88</td>
+      <td>272.145966</td>
+      <td>2437.195801</td>
+      <td>1</td>
+      <td>1647.000000</td>
+      <td>1112.598877</td>
+      <td>0</td>
+      <td>Stac</td>
+      <td>ENSMUST00000035083</td>
+    </tr>
+    <tr>
+      <th>337694</th>
+      <td>88</td>
+      <td>290.370422</td>
+      <td>2435.158447</td>
+      <td>1</td>
+      <td>1815.744995</td>
+      <td>1093.733643</td>
+      <td>0</td>
+      <td>Stac</td>
+      <td>ENSMUST00000035083</td>
+    </tr>
+    <tr>
+      <th>337693</th>
+      <td>88</td>
+      <td>301.869324</td>
+      <td>2434.778564</td>
+      <td>1</td>
+      <td>1922.216187</td>
+      <td>1090.216187</td>
+      <td>0</td>
+      <td>Stac</td>
+      <td>ENSMUST00000035083</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>1263210</th>
+      <td>344</td>
+      <td>288.718689</td>
+      <td>2407.999512</td>
+      <td>3</td>
+      <td>1800.451050</td>
+      <td>842.262634</td>
+      <td>0</td>
+      <td>Opcml</td>
+      <td>ENSMUST00000115243</td>
+    </tr>
+    <tr>
+      <th>1064086</th>
+      <td>293</td>
+      <td>302.692963</td>
+      <td>2479.227295</td>
+      <td>3</td>
+      <td>1929.842529</td>
+      <td>1501.778198</td>
+      <td>0</td>
+      <td>Nfia</td>
+      <td>ENSMUST00000107057</td>
+    </tr>
+    <tr>
+      <th>8179</th>
+      <td>2</td>
+      <td>302.535217</td>
+      <td>2481.986328</td>
+      <td>2</td>
+      <td>1928.382080</td>
+      <td>1527.325928</td>
+      <td>0</td>
+      <td>Kat2b</td>
+      <td>ENSMUST00000000724</td>
+    </tr>
+    <tr>
+      <th>1008680</th>
+      <td>278</td>
+      <td>285.378601</td>
+      <td>2517.526367</td>
+      <td>2</td>
+      <td>1769.524414</td>
+      <td>1856.399658</td>
+      <td>0</td>
+      <td>Ptprd</td>
+      <td>ENSMUST00000102834</td>
+    </tr>
+    <tr>
+      <th>177459</th>
+      <td>45</td>
+      <td>284.430573</td>
+      <td>2456.967285</td>
+      <td>5</td>
+      <td>1760.746460</td>
+      <td>1295.667725</td>
+      <td>0</td>
+      <td>Rps6ka2</td>
+      <td>ENSMUST00000024575</td>
+    </tr>
+  </tbody>
+</table>
+<p>19621 rows × 9 columns</p>
+</div></div></div>
+</div>
+</div>
+<div class="section" id="transform-coordinates">
+<h2><span class="section-number">3.4. </span>Transform Coordinates<a class="headerlink" href="#transform-coordinates" title="Permalink to this headline">#</a></h2>
+<div class="section" id="four-kinds-of-coordinates-and-their-transformation">
+<h3><span class="section-number">3.4.1. </span>Four kinds of coordinates and their transformation<a class="headerlink" href="#four-kinds-of-coordinates-and-their-transformation" title="Permalink to this headline">#</a></h3>
+<ul class="simple">
+<li><p>Global Pixel</p></li>
+<li><p>Global Micron</p></li>
+<li><p>Local Pixel</p></li>
+<li><p>Local Micron</p></li>
+</ul>
+</div>
+<div class="section" id="transform-helper">
+<h3><span class="section-number">3.4.2. </span>Transform Helper<a class="headerlink" href="#transform-helper" title="Permalink to this headline">#</a></h3>
+<ul class="simple">
+<li><p>get FOV extent: <code class="docutils literal notranslate"><span class="pre">xmin,</span> <span class="pre">ymin,</span> <span class="pre">xmax,</span> <span class="pre">ymax</span> <span class="pre">=</span> <span class="pre">merfish.get_fov_pixel_extent_from_transcripts(fov,</span> <span class="pre">padding)</span></code></p></li>
+<li><p>get FOV offset: <code class="docutils literal notranslate"><span class="pre">offset</span> <span class="pre">=</span> <span class="pre">(xmin,</span> <span class="pre">ymin)</span></code></p></li>
+<li><p>Global to Local: add FOV offset (xmin, ymin)</p></li>
+<li><p>Local to Global: minus FOV offset (xmin, ymin)</p></li>
+<li><p>Micron to Pixel: <code class="docutils literal notranslate"><span class="pre">merfish.transform.micron_to_pixel_transform</span></code></p></li>
+<li><p>Pixel to Micron: <code class="docutils literal notranslate"><span class="pre">merfish.transform.pixel_to_micron_transform</span></code></p></li>
+</ul>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># coords in file are global microns</span>
+<span class="n">cell_meta</span><span class="p">[[</span><span class="s1">&#39;center_x&#39;</span><span class="p">,</span> <span class="s1">&#39;center_y&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_html"><div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>center_x</th>
+      <th>center_y</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>124059131287748509520752689217573234598</th>
+      <td>280.461963</td>
+      <td>2399.439158</td>
+    </tr>
+    <tr>
+      <th>124436133021557870166867524905466212748</th>
+      <td>306.381964</td>
+      <td>2501.283161</td>
+    </tr>
+    <tr>
+      <th>138776182618754649880225222913501206037</th>
+      <td>302.223964</td>
+      <td>2495.019161</td>
+    </tr>
+    <tr>
+      <th>145005692207541910116913385133261169729</th>
+      <td>278.895963</td>
+      <td>2444.043160</td>
+    </tr>
+    <tr>
+      <th>169795232385260290859218448407072971352</th>
+      <td>306.597964</td>
+      <td>2492.751161</td>
+    </tr>
+  </tbody>
+</table>
+</div></div></div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">merfish</span><span class="o">.</span><span class="n">transform</span><span class="o">.</span><span class="n">micron_to_pixel_transform</span><span class="p">([[</span><span class="mi">280</span><span class="p">,</span> <span class="mi">2399</span><span class="p">],</span> <span class="p">[</span><span class="mi">306</span><span class="p">,</span> <span class="mi">2501</span><span class="p">]])</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>array([[ 1720, 24564],
+       [ 1960, 25508]])
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">merfish</span><span class="o">.</span><span class="n">transform</span><span class="o">.</span><span class="n">pixel_to_micron_transform</span><span class="p">([[</span><span class="mi">1720</span><span class="p">,</span> <span class="mi">24564</span><span class="p">],</span> <span class="p">[</span><span class="mi">1960</span><span class="p">,</span> <span class="mi">25508</span><span class="p">]])</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>array([[ 280.0272, 2399.0312],
+       [ 305.9468, 2500.9817]], dtype=float32)
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># xmin, ymin, xmax, ymax</span>
+<span class="n">merfish</span><span class="o">.</span><span class="n">get_fov_micron_extent_from_transcripts</span><span class="p">(</span><span class="n">fov</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>(268.18927001953125, 2398.84130859375, 305.7469177246094, 2527.31201171875)
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># xmin, ymin, xmax, ymax</span>
+<span class="n">merfish</span><span class="o">.</span><span class="n">get_fov_pixel_extent_from_transcripts</span><span class="p">(</span><span class="n">fov</span><span class="p">,</span> <span class="n">padding</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>(1460, 24412, 2108, 25902)
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="make-plots">
+<h2><span class="section-number">3.5. </span>Make Plots<a class="headerlink" href="#make-plots" title="Permalink to this headline">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">merfish</span><span class="o">.</span><span class="n">plot_fov</span><span class="p">(</span><span class="n">fov</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">150</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/02.entry_point_17_0.png" src="../_images/02.entry_point_17_0.png" />
+</div>
+</div>
+</div>
+<div class="section" id="more-control-on-images">
+<h2><span class="section-number">3.6. </span>More control on images<a class="headerlink" href="#more-control-on-images" title="Permalink to this headline">#</a></h2>
+<div class="section" id="plot-transcripts">
+<h3><span class="section-number">3.6.1. </span>Plot transcripts<a class="headerlink" href="#plot-transcripts" title="Permalink to this headline">#</a></h3>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">genes</span> <span class="o">=</span> <span class="n">transcripts</span><span class="p">[</span><span class="s1">&#39;gene&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">index</span><span class="p">[:</span><span class="mi">50</span><span class="p">]</span>
+
+<span class="n">fig</span> <span class="o">=</span> <span class="n">merfish</span><span class="o">.</span><span class="n">plot_fov</span><span class="p">(</span><span class="n">fov</span><span class="o">=</span><span class="n">fov</span><span class="p">,</span> <span class="n">genes</span><span class="o">=</span><span class="n">genes</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">150</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/02.entry_point_19_0.png" src="../_images/02.entry_point_19_0.png" />
+</div>
+</div>
+</div>
+<div class="section" id="plot-other-smfish-images">
+<h3><span class="section-number">3.6.2. </span>plot other smFISH Images<a class="headerlink" href="#plot-other-smfish-images" title="Permalink to this headline">#</a></h3>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">merfish</span><span class="o">.</span><span class="n">plot_fov</span><span class="p">(</span>
+    <span class="n">fov</span><span class="o">=</span><span class="n">fov</span><span class="p">,</span>
+    <span class="n">plot_boundary</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">plot_cell_centers</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">genes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">image_names</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;PolyT+Snap25+DAPI&#39;</span><span class="p">,</span> <span class="s1">&#39;DAPI&#39;</span><span class="p">,</span> <span class="s1">&#39;PolyT&#39;</span><span class="p">,</span> <span class="s1">&#39;Snap25&#39;</span><span class="p">,</span> <span class="s1">&#39;Mbp&#39;</span><span class="p">),</span>
+    <span class="n">padding</span><span class="o">=</span><span class="n">padding</span><span class="p">,</span>
+    <span class="n">dpi</span><span class="o">=</span><span class="mi">150</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/02.entry_point_21_0.png" src="../_images/02.entry_point_21_0.png" />
+</div>
+</div>
+</div>
+</div>
+</div>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            kernelName: "python3",
+            path: "./user_guide"
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+              </div>
+              
+            </main>
+            <footer class="footer-article noprint">
+                
+    <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+    <a class='left-prev' id="prev-link" href="01.prepare_archive.html" title="previous page">
+        <i class="fas fa-angle-left"></i>
+        <div class="prev-next-info">
+            <p class="prev-next-subtitle">previous</p>
+            <p class="prev-next-title"><span class="section-number">2. </span>Archive MERFISH Experiment</p>
+        </div>
+    </a>
+    <a class='right-next' id="next-link" href="03.detect_smfish_spots.html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title"><span class="section-number">4. </span>smFISH Spot Detection</p>
+    </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
+</div>
+            </footer>
+        </div>
+    </div>
+    <div class="footer-content row">
+        <footer class="col footer"><p>
+  
+    By Hanqing Liu<br/>
+  
+      &copy; Copyright 2022.<br/>
+</p>
+        </footer>
+    </div>
+    
+</div>
+
+
+      </div>
+    </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
+
+
+  </body>
+</html>
