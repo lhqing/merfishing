@@ -32,6 +32,7 @@ dependencies = [
     "matplotlib",
     "cellpose",
     "torch",
+    "tables",
     "big-fish"
 ]
 
@@ -50,16 +51,6 @@ doc = [
 test = [
     "pytest",
     "pytest-cov",
-    "anndata",
-    "zarr",
-    "tifffile",
-    "xarray",
-    "opencv-python",
-    "shapely",
-    "matplotlib",
-    "big-fish",
-    "torch",
-    "cellpose"
 ]
 
 [tool.coverage.run]
