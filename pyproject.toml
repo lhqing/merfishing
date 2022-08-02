@@ -53,7 +53,10 @@ test = [
     "xarray",
     "opencv-python",
     "shapely",
-    "matplotlib"
+    "matplotlib",
+    "bigfish",
+    "pytorch",
+    "cellpose"
 ]
 
 [tool.coverage.run]
