@@ -29,5 +29,3 @@ htmlcov/
 
 docs/user_guide/dummy_experiment/output/region_0/cell_masks*
 docs/user_guide/dummy_experiment/output/region_0/*cellpose*
-docs/user_guide/dummy_experiment/output/region_0/detected_transcripts.hdf5
-docs/user_guide/dummy_experiment/output/region_0/images/smfish_transcripts.hdf5

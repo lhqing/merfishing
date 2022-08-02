@@ -35,7 +35,7 @@ def _check_basics(merfish):
 
     # cleanup
     assert merfish.smfish_transcripts_path.exists()
-    merfish.smfish_transcripts_path.unlink(missing_ok=True)
+    # merfish.smfish_transcripts_path.unlink(missing_ok=True)
 
 
 def test_watershed_merfish():
@@ -43,9 +43,9 @@ def test_watershed_merfish():
     _check_basics(merfish)
 
 
-def test_cellpose_merfish(redo=False):
+def test_cellpose_merfish():
     merfish = MerfishExperimentRegion(DUMMY_REGION_PATH)
-    merfish.cell_segmentation(model_type="cyto", diameter=100, jobs=8, verbose=False, redo=redo)
+    merfish.cell_segmentation(model_type="cyto", diameter=100, jobs=8, verbose=False, redo=True)
     merfish = MerfishExperimentRegion(DUMMY_REGION_PATH, cell_segmentation="cellpose")
     assert merfish.segmentation_method == "cellpose"
 
