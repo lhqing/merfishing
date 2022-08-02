@@ -1,10 +1,10 @@
 # merfishing
 
-[![Tests][badge-tests]][link-tests]
-[![Documentation][badge-docs]][link-docs]
+# [![Tests][badge-tests]][link-tests]
 
-[badge-tests]: https://img.shields.io/github/workflow/status/lhqing/merfishing/Test/main
-[link-tests]: https://github.com/lhqing/merfishing/actions/workflows/test.yml
+# [badge-tests]: https://img.shields.io/github/workflow/status/lhqing/merfishing/Test/main
+
+# [link-tests]: https://github.com/lhqing/merfishing/actions/workflows/test.yml
 
 [![Jupyter Book Badge](https://jupyterbook.org/badge.svg)](https://lhqing.github.io/merfishing/intro.html)
 
@@ -12,7 +12,7 @@ Code for MERFISH analysis
 
 ## Getting started
 
-Please refer to the [documentation][https://lhqing.github.io/merfishing/intro.html].
+Please refer to the [documentation](https://lhqing.github.io/merfishing/intro.html).
 
 ## Installation
 

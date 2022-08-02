@@ -181,9 +181,9 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
             df = pd.read_csv(self.cell_metadata_path, index_col=0)
             self._cell_metadata = df
         df = self._cell_metadata
-
+        df["fov"] = df["fov"].astype(int)
         if fov is not None:
-            df = df.loc[df["fov"] == fov].copy()
+            df = df.loc[df["fov"] == int(fov)].copy()
         return df
 
     def _get_cell_watershed_boundaries(self, fov=None, cells=None) -> dict:
@@ -196,7 +196,7 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
             df = self.get_cell_metadata(fov)
             cells = df.index.to_list()
 
-        hdf_path = self._watershed_cell_boundary_hdf_paths[fov]
+        hdf_path = self._watershed_cell_boundary_hdf_paths[int(fov)]
         boundaries = load_watershed_boundaries(hdf_path, cells)
         return boundaries
 
