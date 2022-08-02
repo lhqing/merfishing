@@ -4,7 +4,7 @@
 .idea/
 # Compiled files
 __pycache__/
-
+_build/
 # Distribution / packaging
 /build/
 /dist/

@@ -1,0 +1,379 @@
+{
+    "analysis_tasks": [
+        {
+            "task": "FiducialCorrelationWarp",
+            "module": "merlin.analysis.warp",
+            "parameters": {
+                "write_fiducial_images": false
+            }
+        },
+        {
+            "task": "DeconvolutionPreprocessGuo",
+            "module": "merlin.analysis.preprocess",
+            "parameters": {
+                "warp_task": "FiducialCorrelationWarp",
+                "highpass_sigma": 2,
+                "decon_sigma": 1.4,
+                "decon_filter_size": 9
+            }
+        },
+        {
+            "task": "OptimizeIteration",
+            "module": "merlin.analysis.optimize",
+            "analysis_name": "Optimize1",
+            "parameters": {
+                "preprocess_task": "DeconvolutionPreprocessGuo",
+                "warp_task": "FiducialCorrelationWarp",
+                "area_threshold": 5,
+                "fov_per_iteration": 50
+            }
+        },
+        {
+            "task": "OptimizeIteration",
+            "module": "merlin.analysis.optimize",
+            "analysis_name": "Optimize2",
+            "parameters": {
+                "preprocess_task": "DeconvolutionPreprocessGuo",
+                "warp_task": "FiducialCorrelationWarp",
+                "area_threshold": 5,
+                "fov_per_iteration": 50,
+                "previous_iteration": "Optimize1"
+            }
+        },
+        {
+            "task": "OptimizeIteration",
+            "module": "merlin.analysis.optimize",
+            "analysis_name": "Optimize3",
+            "parameters": {
+                "preprocess_task": "DeconvolutionPreprocessGuo",
+                "warp_task": "FiducialCorrelationWarp",
+                "area_threshold": 5,
+                "fov_per_iteration": 50,
+                "previous_iteration": "Optimize2"
+            }
+        },
+        {
+            "task": "OptimizeIteration",
+            "module": "merlin.analysis.optimize",
+            "analysis_name": "Optimize4",
+            "parameters": {
+                "preprocess_task": "DeconvolutionPreprocessGuo",
+                "warp_task": "FiducialCorrelationWarp",
+                "area_threshold": 5,
+                "fov_per_iteration": 50,
+                "previous_iteration": "Optimize3"
+            }
+        },
+        {
+            "task": "OptimizeIteration",
+            "module": "merlin.analysis.optimize",
+            "analysis_name": "Optimize5",
+            "parameters": {
+                "preprocess_task": "DeconvolutionPreprocessGuo",
+                "warp_task": "FiducialCorrelationWarp",
+                "area_threshold": 5,
+                "fov_per_iteration": 50,
+                "previous_iteration": "Optimize4"
+            }
+        },
+        {
+            "task": "OptimizeIteration",
+            "module": "merlin.analysis.optimize",
+            "analysis_name": "Optimize6",
+            "parameters": {
+                "preprocess_task": "DeconvolutionPreprocessGuo",
+                "warp_task": "FiducialCorrelationWarp",
+                "area_threshold": 5,
+                "fov_per_iteration": 50,
+                "previous_iteration": "Optimize5"
+            }
+        },
+        {
+            "task": "OptimizeIteration",
+            "module": "merlin.analysis.optimize",
+            "analysis_name": "Optimize7",
+            "parameters": {
+                "preprocess_task": "DeconvolutionPreprocessGuo",
+                "warp_task": "FiducialCorrelationWarp",
+                "area_threshold": 5,
+                "fov_per_iteration": 50,
+                "previous_iteration": "Optimize6"
+            }
+        },
+        {
+            "task": "OptimizeIteration",
+            "module": "merlin.analysis.optimize",
+            "analysis_name": "Optimize8",
+            "parameters": {
+                "preprocess_task": "DeconvolutionPreprocessGuo",
+                "warp_task": "FiducialCorrelationWarp",
+                "area_threshold": 5,
+                "fov_per_iteration": 50,
+                "previous_iteration": "Optimize7"
+            }
+        },
+        {
+            "task": "OptimizeIteration",
+            "module": "merlin.analysis.optimize",
+            "analysis_name": "Optimize9",
+            "parameters": {
+                "preprocess_task": "DeconvolutionPreprocessGuo",
+                "warp_task": "FiducialCorrelationWarp",
+                "area_threshold": 5,
+                "fov_per_iteration": 50,
+                "previous_iteration": "Optimize8"
+            }
+        },
+        {
+            "task": "OptimizeIteration",
+            "module": "merlin.analysis.optimize",
+            "analysis_name": "Optimize10",
+            "parameters": {
+                "preprocess_task": "DeconvolutionPreprocessGuo",
+                "warp_task": "FiducialCorrelationWarp",
+                "area_threshold": 5,
+                "fov_per_iteration": 50,
+                "previous_iteration": "Optimize9"
+            }
+        },
+        {
+            "task": "Decode",
+            "module": "merlin.analysis.decode",
+            "parameters": {
+                "preprocess_task": "DeconvolutionPreprocessGuo",
+                "optimize_task": "Optimize10",
+                "global_align_task": "CorrelationGlobalAlignment",
+                "minimum_area": 1,
+                "lowpass_sigma": 0.6,
+                "crop_width": 100,
+                "write_decoded_images": false,
+                "distance_threshold": 0.6,
+                "remove_z_duplicated_barcodes": true
+            }
+        },
+        {
+            "task": "CorrelationGlobalAlignment",
+            "module": "merlin.analysis.corralign",
+            "parameters": {
+                "crop_width": 100
+            }
+        },
+        {
+            "task": "AverageImageTask",
+            "module": "merlin.analysis.aveimage",
+            "analysis_name": "AverageImageTask",
+            "parameters": {
+                "global_align_task": "CorrelationGlobalAlignment",
+                "converge_epsilon": "1.0e-7",
+                "gauss_smooth_size": "15",
+                "write_log": true
+            }
+        },
+        {
+            "task": "ExportBarcodes",
+            "module": "merlin.analysis.exportbarcodes",
+            "parameters": {
+                "filter_task": "AdaptiveFilterBarcodes",
+                "columns": [
+                    "barcode_id",
+                    "global_x",
+                    "global_y",
+                    "global_z",
+                    "x",
+                    "y",
+                    "fov"
+                ],
+                "exclude_blanks": false
+            }
+        },
+        {
+            "task": "GenerateAdaptiveThreshold",
+            "module": "merlin.analysis.filterbarcodes",
+            "parameters": {
+                "decode_task": "Decode",
+                "run_after_task": "Optimize10"
+            }
+        },
+        {
+            "task": "AdaptiveFilterBarcodes",
+            "module": "merlin.analysis.filterbarcodes",
+            "parameters": {
+                "decode_task": "Decode",
+                "adaptive_task": "GenerateAdaptiveThreshold",
+                "misidentification_rate": 0.05
+            }
+        },
+        {
+            "task": "BlendMosaic",
+            "module": "merlin.analysis.blendmosaic",
+            "parameters": {
+                "global_align_task": "CorrelationGlobalAlignment",
+                "warp_task": "FiducialCorrelationWarp",
+                "microns_per_pixel": 0.108,
+                "flat_field_correction": true,
+                "average_image_task": "AverageImageTask",
+                "pyramid_save": false
+            }
+        },
+        {
+            "task": "FitMERFISHSpots",
+            "module": "merlin.analysis.spotfit",
+            "parameters": {
+                "warp_task": "FiducialCorrelationWarp"
+            }
+        },
+        {
+            "task": "PyramidalMosaic",
+            "module": "merlin.analysis.pyrmosaic",
+            "parameters": {
+                "blend_mosaic": "BlendMosaic",
+                "max_tasks": 10
+            }
+        },
+        {
+            "task": "WatershedSegment",
+            "module": "merlin.analysis.segment",
+            "parameters": {
+                "warp_task": "FiducialCorrelationWarp",
+                "global_align_task": "CorrelationGlobalAlignment",
+                "stardist_model": "nuclei_default",
+                "seed_channel_name": "DAPI",
+                "watershed_channel_name": "PolyT"
+            }
+        },
+        {
+            "task": "CleanCellBoundaries",
+            "module": "merlin.analysis.segment",
+            "parameters": {
+                "segment_task": "WatershedSegment",
+                "global_align_task": "CorrelationGlobalAlignment"
+            }
+        },
+        {
+            "task": "CombineCleanedBoundaries",
+            "module": "merlin.analysis.segment",
+            "parameters": {
+                "cleaning_task": "CleanCellBoundaries"
+            }
+        },
+        {
+            "task": "RefineCellDatabases",
+            "module": "merlin.analysis.segment",
+            "parameters": {
+                "segment_task": "WatershedSegment",
+                "combine_cleaning_task": "CombineCleanedBoundaries"
+            }
+        },
+        {
+            "task": "SumSignal",
+            "module": "merlin.analysis.sequential",
+            "parameters": {
+                "z_index": 0,
+                "apply_highpass": true,
+                "warp_task": "FiducialCorrelationWarp",
+                "highpass_sigma": 5,
+                "segment_task": "RefineCellDatabases",
+                "global_align_task": "CorrelationGlobalAlignment"
+            }
+        },
+        {
+            "task": "ExportSumSignals",
+            "module": "merlin.analysis.sequential",
+            "parameters": {
+                "sequential_task": "SumSignal"
+            }
+        },
+        {
+            "task": "PartitionBarcodes",
+            "module": "merlin.analysis.partition",
+            "parameters": {
+                "filter_task": "AdaptiveFilterBarcodes",
+                "assignment_task": "RefineCellDatabases",
+                "alignment_task": "CorrelationGlobalAlignment"
+            }
+        },
+        {
+            "task": "ExportPartitionedBarcodes",
+            "module": "merlin.analysis.partition",
+            "parameters": {
+                "partition_task": "PartitionBarcodes"
+            }
+        },
+        {
+            "task": "ExportCellMetadata",
+            "module": "merlin.analysis.segment",
+            "parameters": {
+                "segment_task": "RefineCellDatabases"
+            }
+        },
+        {
+            "task": "VizAssemble",
+            "module": "merlin.analysis.vizassemble",
+            "parameters": {
+                "segment_task": "RefineCellDatabases",
+                "partition_task": "PartitionBarcodes",
+                "mosaic_task": "PyramidalMosaic"
+            }
+        },
+        {
+            "task": "VizCellsPreprocess",
+            "module": "merlin.analysis.vizcells",
+            "parameters": {
+                "segment_task": "RefineCellDatabases",
+                "alignment_task": "CorrelationGlobalAlignment",
+                "mosaic_task": "BlendMosaic"
+            }
+        },
+        {
+            "task": "VizCells",
+            "module": "merlin.analysis.vizcells",
+            "parameters": {
+                "segment_task": "RefineCellDatabases",
+                "alignment_task": "CorrelationGlobalAlignment",
+                "process_task": "VizCellsPreprocess"
+            }
+        },
+        {
+            "task": "VizBarcodes",
+            "module": "merlin.analysis.vizbarcodes",
+            "parameters": {
+                "filter_task": "AdaptiveFilterBarcodes",
+                "columns": [
+                    "barcode_id",
+                    "global_x",
+                    "global_y",
+                    "global_z",
+                    "x",
+                    "y",
+                    "fov"
+                ],
+                "alignment_task": "CorrelationGlobalAlignment",
+                "mosaic_task": "BlendMosaic"
+            }
+        },
+        {
+            "task": "VizZip",
+            "module": "merlin.analysis.vizzip",
+            "parameters": {
+                "vizbarcodes_task": "VizBarcodes",
+                "vizcells_task": "VizCells",
+                "vizassemble_task": "VizAssemble"
+            }
+        },
+        {
+            "task": "AnalysisDataTransfer",
+            "module": "merlin.analysis.transfer",
+            "parameters": {
+                "dependencies": [
+                    "ExportBarcodes",
+                    "ExportPartitionedBarcodes",
+                    "ExportCellMetadata",
+                    "ExportSumSignals",
+                    "RefineCellDatabases",
+                    "BlendMosaic",
+                    "VizZip"
+                ]
+            }
+        }
+    ]
+}

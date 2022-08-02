@@ -1,0 +1,292 @@
+[
+    {
+        "AcquireTiledImageStack": {
+            "stack_configuration": "D:\\MERSCOPEDATA\\202205231554_MouseSagittalM3S1_VMSC01101\\settings\\stack_prestain.toml",
+            "positions_path": "D:\\MERSCOPEDATA\\202205231554_MouseSagittalM3S1_VMSC01101\\settings\\positions.csv",
+            "save_path": "D:\\MERSCOPEDATA\\202205231554_MouseSagittalM3S1_VMSC01101\\data",
+            "base_name": "stack_prestain",
+            "increment": true
+        }
+    },
+    {
+        "Extinguish": {
+            "increment": true,
+            "incubation_time": 45
+        }
+    },
+    {
+        "Hybridize": {
+            "hybridization_buffer": 1,
+            "increment": true
+        }
+    },
+    {
+        "Imaging": {}
+    },
+    {
+        "AcquireTiledImageStack": {
+            "stack_configuration": "D:\\MERSCOPEDATA\\202205231554_MouseSagittalM3S1_VMSC01101\\settings\\stack0.toml",
+            "positions_path": "D:\\MERSCOPEDATA\\202205231554_MouseSagittalM3S1_VMSC01101\\settings\\positions.csv",
+            "save_path": "D:\\MERSCOPEDATA\\202205231554_MouseSagittalM3S1_VMSC01101\\data",
+            "base_name": "stack_0",
+            "increment": true
+        }
+    },
+    {
+        "Extinguish": {
+            "increment": true,
+            "incubation_time": 10
+        }
+    },
+    {
+        "Hybridize": {
+            "hybridization_buffer": 3,
+            "increment": true
+        }
+    },
+    {
+        "Imaging": {}
+    },
+    {
+        "AcquireTiledImageStack": {
+            "stack_configuration": "D:\\MERSCOPEDATA\\202205231554_MouseSagittalM3S1_VMSC01101\\settings\\stack1.toml",
+            "positions_path": "D:\\MERSCOPEDATA\\202205231554_MouseSagittalM3S1_VMSC01101\\settings\\positions.csv",
+            "save_path": "D:\\MERSCOPEDATA\\202205231554_MouseSagittalM3S1_VMSC01101\\data",
+            "base_name": "stack_1",
+            "increment": true
+        }
+    },
+    {
+        "Extinguish": {
+            "increment": true,
+            "incubation_time": 10
+        }
+    },
+    {
+        "Hybridize": {
+            "hybridization_buffer": 7,
+            "increment": true
+        }
+    },
+    {
+        "Imaging": {}
+    },
+    {
+        "AcquireTiledImageStack": {
+            "stack_configuration": "D:\\MERSCOPEDATA\\202205231554_MouseSagittalM3S1_VMSC01101\\settings\\stack2.toml",
+            "positions_path": "D:\\MERSCOPEDATA\\202205231554_MouseSagittalM3S1_VMSC01101\\settings\\positions.csv",
+            "save_path": "D:\\MERSCOPEDATA\\202205231554_MouseSagittalM3S1_VMSC01101\\data",
+            "base_name": "stack_2",
+            "increment": true
+        }
+    },
+    {
+        "Extinguish": {
+            "increment": true,
+            "incubation_time": 10
+        }
+    },
+    {
+        "Hybridize": {
+            "hybridization_buffer": 9,
+            "increment": true
+        }
+    },
+    {
+        "Imaging": {}
+    },
+    {
+        "AcquireTiledImageStack": {
+            "stack_configuration": "D:\\MERSCOPEDATA\\202205231554_MouseSagittalM3S1_VMSC01101\\settings\\stack3.toml",
+            "positions_path": "D:\\MERSCOPEDATA\\202205231554_MouseSagittalM3S1_VMSC01101\\settings\\positions.csv",
+            "save_path": "D:\\MERSCOPEDATA\\202205231554_MouseSagittalM3S1_VMSC01101\\data",
+            "base_name": "stack_3",
+            "increment": true
+        }
+    },
+    {
+        "Extinguish": {
+            "increment": true,
+            "incubation_time": 10
+        }
+    },
+    {
+        "Hybridize": {
+            "hybridization_buffer": 11,
+            "increment": true
+        }
+    },
+    {
+        "Imaging": {}
+    },
+    {
+        "AcquireTiledImageStack": {
+            "stack_configuration": "D:\\MERSCOPEDATA\\202205231554_MouseSagittalM3S1_VMSC01101\\settings\\stack4.toml",
+            "positions_path": "D:\\MERSCOPEDATA\\202205231554_MouseSagittalM3S1_VMSC01101\\settings\\positions.csv",
+            "save_path": "D:\\MERSCOPEDATA\\202205231554_MouseSagittalM3S1_VMSC01101\\data",
+            "base_name": "stack_4",
+            "increment": true
+        }
+    },
+    {
+        "Extinguish": {
+            "increment": true,
+            "incubation_time": 10
+        }
+    },
+    {
+        "Hybridize": {
+            "hybridization_buffer": 15,
+            "increment": true
+        }
+    },
+    {
+        "Imaging": {}
+    },
+    {
+        "AcquireTiledImageStack": {
+            "stack_configuration": "D:\\MERSCOPEDATA\\202205231554_MouseSagittalM3S1_VMSC01101\\settings\\stack5.toml",
+            "positions_path": "D:\\MERSCOPEDATA\\202205231554_MouseSagittalM3S1_VMSC01101\\settings\\positions.csv",
+            "save_path": "D:\\MERSCOPEDATA\\202205231554_MouseSagittalM3S1_VMSC01101\\data",
+            "base_name": "stack_5",
+            "increment": true
+        }
+    },
+    {
+        "Extinguish": {
+            "increment": true,
+            "incubation_time": 10
+        }
+    },
+    {
+        "Hybridize": {
+            "hybridization_buffer": 17,
+            "increment": true
+        }
+    },
+    {
+        "Imaging": {}
+    },
+    {
+        "AcquireTiledImageStack": {
+            "stack_configuration": "D:\\MERSCOPEDATA\\202205231554_MouseSagittalM3S1_VMSC01101\\settings\\stack6.toml",
+            "positions_path": "D:\\MERSCOPEDATA\\202205231554_MouseSagittalM3S1_VMSC01101\\settings\\positions.csv",
+            "save_path": "D:\\MERSCOPEDATA\\202205231554_MouseSagittalM3S1_VMSC01101\\data",
+            "base_name": "stack_6",
+            "increment": true
+        }
+    },
+    {
+        "Extinguish": {
+            "increment": true,
+            "incubation_time": 10
+        }
+    },
+    {
+        "Hybridize": {
+            "hybridization_buffer": 19,
+            "increment": true
+        }
+    },
+    {
+        "Imaging": {}
+    },
+    {
+        "AcquireTiledImageStack": {
+            "stack_configuration": "D:\\MERSCOPEDATA\\202205231554_MouseSagittalM3S1_VMSC01101\\settings\\stack7.toml",
+            "positions_path": "D:\\MERSCOPEDATA\\202205231554_MouseSagittalM3S1_VMSC01101\\settings\\positions.csv",
+            "save_path": "D:\\MERSCOPEDATA\\202205231554_MouseSagittalM3S1_VMSC01101\\data",
+            "base_name": "stack_7",
+            "increment": true
+        }
+    },
+    {
+        "Extinguish": {
+            "increment": true,
+            "incubation_time": 10
+        }
+    },
+    {
+        "Hybridize": {
+            "hybridization_buffer": 21,
+            "increment": true
+        }
+    },
+    {
+        "Imaging": {}
+    },
+    {
+        "AcquireTiledImageStack": {
+            "stack_configuration": "D:\\MERSCOPEDATA\\202205231554_MouseSagittalM3S1_VMSC01101\\settings\\stack8.toml",
+            "positions_path": "D:\\MERSCOPEDATA\\202205231554_MouseSagittalM3S1_VMSC01101\\settings\\positions.csv",
+            "save_path": "D:\\MERSCOPEDATA\\202205231554_MouseSagittalM3S1_VMSC01101\\data",
+            "base_name": "stack_8",
+            "increment": true
+        }
+    },
+    {
+        "Extinguish": {
+            "increment": true,
+            "incubation_time": 10
+        }
+    },
+    {
+        "Hybridize": {
+            "hybridization_buffer": 28,
+            "increment": true
+        }
+    },
+    {
+        "Imaging": {}
+    },
+    {
+        "AcquireTiledImageStack": {
+            "stack_configuration": "D:\\MERSCOPEDATA\\202205231554_MouseSagittalM3S1_VMSC01101\\settings\\stack9.toml",
+            "positions_path": "D:\\MERSCOPEDATA\\202205231554_MouseSagittalM3S1_VMSC01101\\settings\\positions.csv",
+            "save_path": "D:\\MERSCOPEDATA\\202205231554_MouseSagittalM3S1_VMSC01101\\data",
+            "base_name": "stack_9",
+            "increment": true
+        }
+    },
+    {
+        "Extinguish": {
+            "increment": true,
+            "incubation_time": 45
+        }
+    },
+    {
+        "Hybridize": {
+            "hybridization_buffer": 30,
+            "increment": true
+        }
+    },
+    {
+        "Imaging": {}
+    },
+    {
+        "AcquireTiledImageStack": {
+            "stack_configuration": "D:\\MERSCOPEDATA\\202205231554_MouseSagittalM3S1_VMSC01101\\settings\\stack10.toml",
+            "positions_path": "D:\\MERSCOPEDATA\\202205231554_MouseSagittalM3S1_VMSC01101\\settings\\positions.csv",
+            "save_path": "D:\\MERSCOPEDATA\\202205231554_MouseSagittalM3S1_VMSC01101\\data",
+            "base_name": "stack_10",
+            "increment": true
+        }
+    },
+    {
+        "GenerateSegmentationPreview": {
+            "dataset_name": "202205231554_MouseSagittalM3S1_VMSC01101",
+            "fovs": [
+                "0",
+                "139",
+                "278",
+                "416",
+                "555",
+                "693",
+                "832",
+                "970",
+                "1109",
+                "1247"
+            ]
+        }
+    }
+]

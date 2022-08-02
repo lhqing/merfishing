@@ -1,0 +1,152 @@
+{
+    "microns_per_pixel": 0.108,
+    "mosaic_width_pixels": 95806,
+    "mosaic_height_pixels": 95191,
+    "bbox_microns": [
+        94.26996000000156, -253.84212000000528, 338.1303, 2559.733
+    ],
+    "hor_num_tiles_box": 52,
+    "vert_num_tiles_box": 50,
+    "mosaic_files": [
+        {
+            "stain": "Snap25",
+            "z": 0,
+            "file_name": "mosaic_Snap25_z0.tif"
+        },
+        {
+            "stain": "Mbp",
+            "z": 0,
+            "file_name": "mosaic_Mbp_z0.tif"
+        },
+        {
+            "stain": "PolyT",
+            "z": 0,
+            "file_name": "mosaic_PolyT_z0.tif"
+        },
+        {
+            "stain": "DAPI",
+            "z": 0,
+            "file_name": "mosaic_DAPI_z0.tif"
+        },
+        {
+            "stain": "Snap25",
+            "z": 1,
+            "file_name": "mosaic_Snap25_z1.tif"
+        },
+        {
+            "stain": "Mbp",
+            "z": 1,
+            "file_name": "mosaic_Mbp_z1.tif"
+        },
+        {
+            "stain": "PolyT",
+            "z": 1,
+            "file_name": "mosaic_PolyT_z1.tif"
+        },
+        {
+            "stain": "DAPI",
+            "z": 1,
+            "file_name": "mosaic_DAPI_z1.tif"
+        },
+        {
+            "stain": "Snap25",
+            "z": 2,
+            "file_name": "mosaic_Snap25_z2.tif"
+        },
+        {
+            "stain": "Mbp",
+            "z": 2,
+            "file_name": "mosaic_Mbp_z2.tif"
+        },
+        {
+            "stain": "PolyT",
+            "z": 2,
+            "file_name": "mosaic_PolyT_z2.tif"
+        },
+        {
+            "stain": "DAPI",
+            "z": 2,
+            "file_name": "mosaic_DAPI_z2.tif"
+        },
+        {
+            "stain": "Snap25",
+            "z": 3,
+            "file_name": "mosaic_Snap25_z3.tif"
+        },
+        {
+            "stain": "Mbp",
+            "z": 3,
+            "file_name": "mosaic_Mbp_z3.tif"
+        },
+        {
+            "stain": "PolyT",
+            "z": 3,
+            "file_name": "mosaic_PolyT_z3.tif"
+        },
+        {
+            "stain": "DAPI",
+            "z": 3,
+            "file_name": "mosaic_DAPI_z3.tif"
+        },
+        {
+            "stain": "Snap25",
+            "z": 4,
+            "file_name": "mosaic_Snap25_z4.tif"
+        },
+        {
+            "stain": "Mbp",
+            "z": 4,
+            "file_name": "mosaic_Mbp_z4.tif"
+        },
+        {
+            "stain": "PolyT",
+            "z": 4,
+            "file_name": "mosaic_PolyT_z4.tif"
+        },
+        {
+            "stain": "DAPI",
+            "z": 4,
+            "file_name": "mosaic_DAPI_z4.tif"
+        },
+        {
+            "stain": "Snap25",
+            "z": 5,
+            "file_name": "mosaic_Snap25_z5.tif"
+        },
+        {
+            "stain": "Mbp",
+            "z": 5,
+            "file_name": "mosaic_Mbp_z5.tif"
+        },
+        {
+            "stain": "PolyT",
+            "z": 5,
+            "file_name": "mosaic_PolyT_z5.tif"
+        },
+        {
+            "stain": "DAPI",
+            "z": 5,
+            "file_name": "mosaic_DAPI_z5.tif"
+        },
+        {
+            "stain": "Snap25",
+            "z": 6,
+            "file_name": "mosaic_Snap25_z6.tif"
+        },
+        {
+            "stain": "Mbp",
+            "z": 6,
+            "file_name": "mosaic_Mbp_z6.tif"
+        },
+        {
+            "stain": "PolyT",
+            "z": 6,
+            "file_name": "mosaic_PolyT_z6.tif"
+        },
+        {
+            "stain": "DAPI",
+            "z": 6,
+            "file_name": "mosaic_DAPI_z6.tif"
+        }
+    ]
+}
