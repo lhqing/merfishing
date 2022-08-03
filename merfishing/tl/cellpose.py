@@ -147,10 +147,13 @@ def run_cellpose(
         Input image stack for segmentation.
     model_type : str
         Type of segmentation (nuclei or cyto)
+        # TODO in addition to use default model type (pass a str), user should be able to pass a custom model
+        # and use that to run segmentation
     diameter : int
         Average diameter for features
     gpu : bool
         A bool variable indicates whether to use GPU
+        # TODO check if GPU is available, if so, use GPU automatically
     channels : list
         list of channels, either of length 2 or of length number of images by 2.
         First element of list is the channel to segment (0=grayscale, 1=red, 2=blue, 3=green).
