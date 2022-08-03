@@ -34,7 +34,7 @@ dependencies = [
     "torch",
     "tables",
     "big-fish",
-    "numpy==1.22"
+    "numpy"
 ]
 
 [project.optional-dependencies]
