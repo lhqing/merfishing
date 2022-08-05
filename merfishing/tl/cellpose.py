@@ -131,6 +131,7 @@ def run_cellpose(
     image: np.ndarray,
     model_type,
     diameter: int,
+    pretrained_model_path = None,
     gpu=False,
     channels: list = None,
     channel_axis: int = 3,
@@ -180,23 +181,31 @@ def run_cellpose(
     feature_meta: pd.DataFrame
         feature metadata including centroid, bbox, volume, # of z planes
     """
-    if os.path.exists(model_type):
-        model = models.CellposeModel(gpu = gpu, pretrained_model=model_type)
+    model = models.Cellpose(gpu=gpu, model_type=model_type)
+    if pretrained_model_path is not None:
+        assert os.path.exists(pretrained_model_path)
+        pretrained_model = models.CellposeModel(pretrained_model = pretrained_model_path, gpu=False)
+        model.cp = pretrained_model
+        model.cp.model_type=model_type
 
+        model.pretrained_size = models.size_model_path(model_type, model.torch)
+        model.sz = models.SizeModel(device=model.device, pretrained_size=model.pretrained_size,
+                            cp_model=model.cp)
+        model.sz.model_type = model_type
 
-    else:
-        model = models.Cellpose(gpu=gpu, model_type=model_type)
     if verbose:
         print(f"Running Cellpose {model_type} model")
 
-    masks, flows, styles, diams = model.eval(
+    results = model.eval(
         [image.take(i, axis=z_axis) for i in range(image.shape[z_axis])],
         diameter=diameter,
         do_3D=False,
         channels=channels,
         channel_axis=channel_axis,
     )
+    masks, flows = results[0], results[1]
     mask = np.array(masks)  # mask.shape = (z, y, x)
+
     if verbose:
         # noinspection PyArgumentList
         print(f"Cellpose generated {mask.max(axis=(1, 2)).sum()} masks")
