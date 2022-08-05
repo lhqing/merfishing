@@ -219,7 +219,7 @@ def run_cellpose(
     feature_mask = _generate_feature_mask(mask, mask_to_feature_map)
     if verbose:
         print(f"Cellpose generated {feature_meta.shape[0]} features")
-        return feature_mask, feature_meta
+    return feature_mask, feature_meta
 
 
 def outlines_list_3d(mask_3d: np.ndarray, feature_ids=None, transform_func=None, as_polygon=False) -> dict:
