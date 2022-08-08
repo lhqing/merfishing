@@ -92,7 +92,7 @@ def _count_cell_by_gene_table(merfish, offset, feature_mask, fov):
     return cell_by_gene
 
 
-def _cell_segmentation_single_fov(region_dir, fov, padding, output_prefix, model_type, diameter, verbose=False):
+def _cell_segmentation_single_fov(region_dir, fov, padding, output_prefix, pretrained_model_path, model_type, diameter, verbose=False):
     from ..tl.cellpose import run_cellpose
 
     if verbose:
@@ -104,9 +104,10 @@ def _cell_segmentation_single_fov(region_dir, fov, padding, output_prefix, model
     feature_mask, feature_meta = run_cellpose(
         image=_image,
         model_type=model_type,
+        pretrained_model_path = pretrained_model_path,
         diameter=diameter,
         gpu=False,
-        channels=[[0, 2]],
+        channels=[[1, 3]],
         channel_axis=3,
         z_axis=0,
         buffer_pixel_size=15,
@@ -734,7 +735,7 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
     # Cell segmentation analysis
     # ==========================================================================
 
-    def cell_segmentation(self, model_type, diameter, jobs, padding=100, verbose=False, redo=False):
+    def cell_segmentation(self, model_type, diameter, jobs, pretrained_model_path, padding=100, verbose=False, redo=False, debug=None):
         """
         Run cell segmentation on DAPI and PolyT images.
 
@@ -752,6 +753,8 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
             Whether to print progress.
         redo :
             Whether to redo the analysis when the cell segmentation results already exist.
+        debug :
+            If debug is an interger, run only a few FOV and save the temp files.
         """
         import time
 
@@ -792,7 +795,15 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
         output_prefix_list = []
         with ProcessPoolExecutor(jobs) as executor:
             futures = {}
-            for fov in self.fov_ids:
+            if debug is not None:
+                try:
+                    debug = int(debug)
+                except ValueError:
+                    print('Debug need to be None or an integer.')
+                fov_list = self.fov_ids[:debug]
+            else:
+                fov_list = self.fov_ids
+            for fov in fov_list:
                 output_prefix = temp_dir / f"{fov}"
                 output_prefix_list.append(output_prefix)
                 success_flag = f"{output_prefix}_success.txt"
@@ -805,6 +816,7 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
                     fov=fov,
                     padding=padding,
                     model_type=model_type,
+                    pretrained_model_path = pretrained_model_path,
                     output_prefix=output_prefix,
                     verbose=verbose,
                     diameter=diameter,
@@ -854,7 +866,8 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
         final_cell_masks_temp_path.rename(final_cell_masks_path)
 
         # delete temporary directory
-        shutil.rmtree(temp_dir, ignore_errors=True)
+        if debug is None:
+            shutil.rmtree(temp_dir, ignore_errors=True)
         return
 
     # TODO: add a function to get the cell segmentation results in squidpy adata format
