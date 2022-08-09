@@ -111,7 +111,7 @@ def _generate_features(mask, buffer_pixel_size) -> Tuple[pd.DataFrame, dict]:
             "max_x": "max",
             "max_y": "max",
             "volume": "sum",
-            "z": lambda i: i.unique().size,
+            "z": lambda i: i.unique().size
         }
     )
 
@@ -202,6 +202,7 @@ def run_cellpose(
         do_3D=False,
         channels=channels,
         channel_axis=channel_axis,
+        batch_size=64,
     )
     masks, flows = results[0], results[1]
     mask = np.array(masks)  # mask.shape = (z, y, x)
