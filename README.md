@@ -2,7 +2,7 @@
 
 [![Tests](https://img.shields.io/github/workflow/status/lhqing/merfishing/Test/main)](https://github.com/lhqing/merfishing/actions/workflows/test.yml)
 [![Jupyter Book Badge](https://jupyterbook.org/badge.svg)](https://lhqing.github.io/merfishing/intro.html)
-[![codecov](https://codecov.io/gh/lhqing/merfishing/branch/master/graph/badge.svg?token=Y08MNUUKN6)](https://codecov.io/gh/lhqing/merfishing)
+[![codecov](https://codecov.io/gh/lhqing/merfishing/branch/main/graph/badge.svg?token=Y08MNUUKN6)](https://codecov.io/gh/lhqing/merfishing)
 
 Code for MERFISH analysis
 
