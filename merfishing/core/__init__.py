@@ -4,6 +4,7 @@ import time
 import warnings
 from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor, as_completed
+from tqdm import tqdm
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -840,7 +841,7 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
                 fov_list = self.fov_ids[:debug]
             else:
                 fov_list = self.fov_ids
-            for fov in fov_list:
+            for fov in tqdm(fov_list):
                 output_prefix = temp_dir / f"{fov}"
                 output_prefix_list.append(output_prefix)
                 success_flag = f"{output_prefix}_success.txt"
