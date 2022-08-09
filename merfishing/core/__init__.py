@@ -92,7 +92,7 @@ def _count_cell_by_gene_table(merfish, offset, feature_mask, fov):
     return cell_by_gene
 
 
-def _cell_segmentation_single_fov(region_dir, fov, padding, output_prefix, pretrained_model_path, model_type, diameter, verbose=False):
+def _cell_segmentation_single_fov(region_dir, fov, padding, output_prefix, pretrained_model_path, model_type, diameter, gpu = False,verbose=False):
     from ..tl.cellpose import run_cellpose
 
     if verbose:
@@ -106,7 +106,7 @@ def _cell_segmentation_single_fov(region_dir, fov, padding, output_prefix, pretr
         model_type=model_type,
         pretrained_model_path = pretrained_model_path,
         diameter=diameter,
-        gpu=False,
+        gpu=gpu,
         channels=[[1, 3]],
         channel_axis=3,
         z_axis=0,
@@ -735,7 +735,7 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
     # Cell segmentation analysis
     # ==========================================================================
 
-    def cell_segmentation(self, model_type, diameter, jobs, pretrained_model_path, padding=100, verbose=False, redo=False, debug=None):
+    def cell_segmentation(self, model_type, diameter, jobs, pretrained_model_path, padding=100, verbose=False, gpu = False,redo=False, debug=None):
         """
         Run cell segmentation on DAPI and PolyT images.
 
@@ -813,6 +813,7 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
                 future = executor.submit(
                     _cell_segmentation_single_fov,
                     region_dir=str(self.region_dir),
+                    gpu = gpu,
                     fov=fov,
                     padding=padding,
                     model_type=model_type,

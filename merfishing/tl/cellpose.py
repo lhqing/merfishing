@@ -184,7 +184,7 @@ def run_cellpose(
     model = models.Cellpose(gpu=gpu, model_type=model_type)
     if pretrained_model_path is not None:
         assert os.path.exists(pretrained_model_path)
-        pretrained_model = models.CellposeModel(pretrained_model = pretrained_model_path, gpu=False)
+        pretrained_model = models.CellposeModel(pretrained_model = pretrained_model_path, gpu=gpu)
         model.cp = pretrained_model
         model.cp.model_type=model_type
 
