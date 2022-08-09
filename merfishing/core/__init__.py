@@ -793,8 +793,45 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
         temp_dir.mkdir(exist_ok=True)
 
         output_prefix_list = []
-        with ProcessPoolExecutor(jobs) as executor:
-            futures = {}
+        if gpu is False:
+            with ProcessPoolExecutor(jobs) as executor:
+                futures = {}
+                if debug is not None:
+                    try:
+                        debug = int(debug)
+                    except ValueError:
+                        print('Debug need to be None or an integer.')
+                    fov_list = self.fov_ids[:debug]
+                else:
+                    fov_list = self.fov_ids
+                for fov in fov_list:
+                    output_prefix = temp_dir / f"{fov}"
+                    output_prefix_list.append(output_prefix)
+                    success_flag = f"{output_prefix}_success.txt"
+                    if pathlib.Path(success_flag).exists() and not redo:
+                        continue
+
+                    future = executor.submit(
+                        _cell_segmentation_single_fov,
+                        region_dir=str(self.region_dir),
+                        gpu = gpu,
+                        fov=fov,
+                        padding=padding,
+                        model_type=model_type,
+                        pretrained_model_path = pretrained_model_path,
+                        output_prefix=output_prefix,
+                        verbose=verbose,
+                        diameter=diameter,
+                    )
+                    futures[future] = (fov, output_prefix)
+                    time.sleep(1)
+
+                for future in as_completed(futures):
+                    fov, output_prefix = futures[future]
+                    if verbose:
+                        print(f"FOV {fov} finished")
+                    future.result()
+        else:
             if debug is not None:
                 try:
                     debug = int(debug)
@@ -810,8 +847,7 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
                 if pathlib.Path(success_flag).exists() and not redo:
                     continue
 
-                future = executor.submit(
-                    _cell_segmentation_single_fov,
+                _cell_segmentation_single_fov(
                     region_dir=str(self.region_dir),
                     gpu = gpu,
                     fov=fov,
@@ -822,14 +858,6 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
                     verbose=verbose,
                     diameter=diameter,
                 )
-                futures[future] = (fov, output_prefix)
-                time.sleep(1)
-
-            for future in as_completed(futures):
-                fov, output_prefix = futures[future]
-                if verbose:
-                    print(f"FOV {fov} finished")
-                future.result()
 
         # collect the cell segmentation results
         all_meta = []
