@@ -1,5 +1,6 @@
 """Using the cellpose2 package to do nuclei and cell segmentation on DAPI and PolyT images."""
 
+import os
 from collections import defaultdict
 from typing import Tuple
 
@@ -7,7 +8,6 @@ import numpy as np
 import pandas as pd
 from cellpose import models, utils
 from scipy.sparse import coo_matrix
-import os
 from scipy.sparse.csgraph import connected_components
 from sklearn.metrics import pairwise_distances_chunked
 
@@ -111,7 +111,7 @@ def _generate_features(mask, buffer_pixel_size) -> Tuple[pd.DataFrame, dict]:
             "max_x": "max",
             "max_y": "max",
             "volume": "sum",
-            "z": lambda i: i.unique().size
+            "z": lambda i: i.unique().size,
         }
     )
 
@@ -131,7 +131,7 @@ def run_cellpose(
     image: np.ndarray,
     model_type,
     diameter: int,
-    pretrained_model_path = None,
+    pretrained_model_path=None,
     gpu=False,
     channels: list = None,
     channel_axis: int = 3,
@@ -184,13 +184,12 @@ def run_cellpose(
     model = models.Cellpose(gpu=gpu, model_type=model_type)
     if pretrained_model_path is not None:
         assert os.path.exists(pretrained_model_path)
-        pretrained_model = models.CellposeModel(pretrained_model = pretrained_model_path, gpu=gpu)
+        pretrained_model = models.CellposeModel(pretrained_model=pretrained_model_path, gpu=gpu)
         model.cp = pretrained_model
-        model.cp.model_type=model_type
+        model.cp.model_type = model_type
 
         model.pretrained_size = models.size_model_path(model_type, model.torch)
-        model.sz = models.SizeModel(device=model.device, pretrained_size=model.pretrained_size,
-                            cp_model=model.cp)
+        model.sz = models.SizeModel(device=model.device, pretrained_size=model.pretrained_size, cp_model=model.cp)
         model.sz.model_type = model_type
 
     if verbose:
