@@ -129,8 +129,8 @@ def _generate_feature_mask(mask: np.ndarray, mask_feature_map: dict):
 
 def run_cellpose(
     image: np.ndarray,
-    model_type,
     diameter: int,
+    model_type=None,
     pretrained_model_path=None,
     gpu=False,
     channels: list = None,
@@ -149,13 +149,12 @@ def run_cellpose(
         Input image stack for segmentation.
     model_type : str
         Type of segmentation (nuclei or cyto)
-        # TODO in addition to use default model type (pass a str), user should be able to pass a custom model
-        # and use that to run segmentation
     diameter : int
         Average diameter for features
+    pretrained_model_path : str
+        Path to pretrained model
     gpu : bool
         A bool variable indicates whether to use GPU
-        # TODO check if GPU is available, if so, use GPU automatically
     channels : list
         list of channels, either of length 2 or of length number of images by 2.
         First element of list is the channel to segment (0=grayscale, 1=red, 2=blue, 3=green).
@@ -181,6 +180,9 @@ def run_cellpose(
     feature_meta: pd.DataFrame
         feature metadata including centroid, bbox, volume, # of z planes
     """
+    if pretrained_model_path is None and model_type is None:
+        raise ValueError("Either pretrained_model_path or model_type must be specified")
+
     model = models.Cellpose(gpu=gpu, model_type=model_type)
     if pretrained_model_path is not None:
         assert os.path.exists(pretrained_model_path)

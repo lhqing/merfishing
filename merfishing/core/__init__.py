@@ -94,9 +94,24 @@ def _count_cell_by_gene_table(merfish, offset, feature_mask, fov):
 
 
 def _cell_segmentation_single_fov(
-    region_dir, fov, padding, output_prefix, pretrained_model_path, model_type, diameter, gpu=False, verbose=False
+    region_dir,
+    fov,
+    padding,
+    output_prefix,
+    diameter,
+    pretrained_model_path=None,
+    model_type=None,
+    gpu=False,
+    channels=None,
+    verbose=False,
 ):
     from ..tl.cellpose import run_cellpose
+
+    if pretrained_model_path is not None:
+        if channels is None:
+            raise ValueError("channels must be specified if pretrained_model_path is specified")
+    else:
+        channels = [[0, 2]]
 
     if verbose:
         print(f"Segmenting cells in {fov}")
@@ -110,7 +125,7 @@ def _cell_segmentation_single_fov(
         pretrained_model_path=pretrained_model_path,
         diameter=diameter,
         gpu=gpu,
-        channels=[[1, 3]],
+        channels=channels,
         channel_axis=3,
         z_axis=0,
         buffer_pixel_size=15,
@@ -740,10 +755,10 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
 
     def cell_segmentation(
         self,
-        model_type,
         diameter,
         jobs,
-        pretrained_model_path,
+        model_type=None,
+        pretrained_model_path=None,
         padding=100,
         verbose=False,
         gpu=False,
@@ -757,6 +772,8 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
         ----------
         model_type :
             Cellpose2 model type to use for cell segmentation. See cellpose.models.MODEL_NAMES for available models.
+        pretrained_model_path :
+            Path to pretrained model to use for cell segmentation.
         diameter :
             Expected diameter of cells to segment.
         jobs :
@@ -765,12 +782,17 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
             Padding to add to FOV image borders.
         verbose :
             Whether to print progress.
+        gpu :
+            Whether to use GPU for cell segmentation.
         redo :
             Whether to redo the analysis when the cell segmentation results already exist.
         debug :
-            If debug is an interger, run only a few FOV and save the temp files.
+            If debug is an integer, run only a few FOV and save the temp files.
         """
         import time
+
+        if pretrained_model_path is None and model_type is None:
+            raise ValueError("Either pretrained_model_path or model_type must be specified")
 
         final_meta_path = self.region_dir / "cell_metadata.cellpose.csv.gz"
         final_meta_temp_path = self.region_dir / "cell_metadata.cellpose.temp.csv.gz"
@@ -807,17 +829,19 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
         temp_dir.mkdir(exist_ok=True)
 
         output_prefix_list = []
+
+        if debug is not None:
+            try:
+                debug = int(debug)
+            except ValueError:
+                print("Debug need to be None or an integer.")
+            fov_list = self.fov_ids[:debug]
+        else:
+            fov_list = self.fov_ids
+
         if gpu is False:
             with ProcessPoolExecutor(jobs) as executor:
                 futures = {}
-                if debug is not None:
-                    try:
-                        debug = int(debug)
-                    except ValueError:
-                        print("Debug need to be None or an integer.")
-                    fov_list = self.fov_ids[:debug]
-                else:
-                    fov_list = self.fov_ids
                 for fov in fov_list:
                     output_prefix = temp_dir / f"{fov}"
                     output_prefix_list.append(output_prefix)
@@ -846,14 +870,6 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
                         print(f"FOV {fov} finished")
                     future.result()
         else:
-            if debug is not None:
-                try:
-                    debug = int(debug)
-                except ValueError:
-                    print("Debug need to be None or an integer.")
-                fov_list = self.fov_ids[:debug]
-            else:
-                fov_list = self.fov_ids
             for fov in tqdm(fov_list):
                 output_prefix = temp_dir / f"{fov}"
                 output_prefix_list.append(output_prefix)
