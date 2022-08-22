@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import xarray as xr
+from tqdm import tqdm
 
 from ..pl.plot_image import MerfishImageAxesPlotter
 from .dataset import MerfishRegionDirStructureMixin
@@ -92,8 +93,25 @@ def _count_cell_by_gene_table(merfish, offset, feature_mask, fov):
     return cell_by_gene
 
 
-def _cell_segmentation_single_fov(region_dir, fov, padding, output_prefix, model_type, diameter, verbose=False):
+def _cell_segmentation_single_fov(
+    region_dir,
+    fov,
+    padding,
+    output_prefix,
+    diameter,
+    pretrained_model_path=None,
+    model_type=None,
+    gpu=False,
+    channels=None,
+    verbose=False,
+):
     from ..tl.cellpose import run_cellpose
+
+    if pretrained_model_path is not None:
+        if channels is None:
+            raise ValueError("channels must be specified if pretrained_model_path is specified")
+    else:
+        channels = [[0, 2]]
 
     if verbose:
         print(f"Segmenting cells in {fov}")
@@ -104,9 +122,10 @@ def _cell_segmentation_single_fov(region_dir, fov, padding, output_prefix, model
     feature_mask, feature_meta = run_cellpose(
         image=_image,
         model_type=model_type,
+        pretrained_model_path=pretrained_model_path,
         diameter=diameter,
-        gpu=False,
-        channels=[[0, 2]],
+        gpu=gpu,
+        channels=channels,
         channel_axis=3,
         z_axis=0,
         buffer_pixel_size=15,
@@ -734,7 +753,18 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
     # Cell segmentation analysis
     # ==========================================================================
 
-    def cell_segmentation(self, model_type, diameter, jobs, padding=100, verbose=False, redo=False):
+    def cell_segmentation(
+        self,
+        diameter,
+        jobs,
+        model_type=None,
+        pretrained_model_path=None,
+        padding=100,
+        verbose=False,
+        gpu=False,
+        redo=False,
+        debug=None,
+    ):
         """
         Run cell segmentation on DAPI and PolyT images.
 
@@ -742,6 +772,8 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
         ----------
         model_type :
             Cellpose2 model type to use for cell segmentation. See cellpose.models.MODEL_NAMES for available models.
+        pretrained_model_path :
+            Path to pretrained model to use for cell segmentation.
         diameter :
             Expected diameter of cells to segment.
         jobs :
@@ -750,10 +782,17 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
             Padding to add to FOV image borders.
         verbose :
             Whether to print progress.
+        gpu :
+            Whether to use GPU for cell segmentation.
         redo :
             Whether to redo the analysis when the cell segmentation results already exist.
+        debug :
+            If debug is an integer, run only a few FOV and save the temp files.
         """
         import time
+
+        if pretrained_model_path is None and model_type is None:
+            raise ValueError("Either pretrained_model_path or model_type must be specified")
 
         final_meta_path = self.region_dir / "cell_metadata.cellpose.csv.gz"
         final_meta_temp_path = self.region_dir / "cell_metadata.cellpose.temp.csv.gz"
@@ -790,33 +829,65 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
         temp_dir.mkdir(exist_ok=True)
 
         output_prefix_list = []
-        with ProcessPoolExecutor(jobs) as executor:
-            futures = {}
-            for fov in self.fov_ids:
+
+        if debug is not None:
+            try:
+                debug = int(debug)
+            except ValueError:
+                print("Debug need to be None or an integer.")
+            fov_list = self.fov_ids[:debug]
+        else:
+            fov_list = self.fov_ids
+
+        if gpu is False:
+            with ProcessPoolExecutor(jobs) as executor:
+                futures = {}
+                for fov in fov_list:
+                    output_prefix = temp_dir / f"{fov}"
+                    output_prefix_list.append(output_prefix)
+                    success_flag = f"{output_prefix}_success.txt"
+                    if pathlib.Path(success_flag).exists() and not redo:
+                        continue
+
+                    future = executor.submit(
+                        _cell_segmentation_single_fov,
+                        region_dir=str(self.region_dir),
+                        gpu=gpu,
+                        fov=fov,
+                        padding=padding,
+                        model_type=model_type,
+                        pretrained_model_path=pretrained_model_path,
+                        output_prefix=output_prefix,
+                        verbose=verbose,
+                        diameter=diameter,
+                    )
+                    futures[future] = (fov, output_prefix)
+                    time.sleep(1)
+
+                for future in as_completed(futures):
+                    fov, output_prefix = futures[future]
+                    if verbose:
+                        print(f"FOV {fov} finished")
+                    future.result()
+        else:
+            for fov in tqdm(fov_list):
                 output_prefix = temp_dir / f"{fov}"
                 output_prefix_list.append(output_prefix)
                 success_flag = f"{output_prefix}_success.txt"
                 if pathlib.Path(success_flag).exists() and not redo:
                     continue
 
-                future = executor.submit(
-                    _cell_segmentation_single_fov,
+                _cell_segmentation_single_fov(
                     region_dir=str(self.region_dir),
+                    gpu=gpu,
                     fov=fov,
                     padding=padding,
                     model_type=model_type,
+                    pretrained_model_path=pretrained_model_path,
                     output_prefix=output_prefix,
                     verbose=verbose,
                     diameter=diameter,
                 )
-                futures[future] = (fov, output_prefix)
-                time.sleep(1)
-
-            for future in as_completed(futures):
-                fov, output_prefix = futures[future]
-                if verbose:
-                    print(f"FOV {fov} finished")
-                future.result()
 
         # collect the cell segmentation results
         all_meta = []
@@ -854,7 +925,8 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
         final_cell_masks_temp_path.rename(final_cell_masks_path)
 
         # delete temporary directory
-        shutil.rmtree(temp_dir, ignore_errors=True)
+        if debug is None:
+            shutil.rmtree(temp_dir, ignore_errors=True)
         return
 
     # TODO: add a function to get the cell segmentation results in squidpy adata format
