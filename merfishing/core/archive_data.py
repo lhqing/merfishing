@@ -41,9 +41,6 @@ def _rechunk_tiff_zarr(image_path, image_name, chunk_size=5000):
     shutil.rmtree(temp_path, ignore_errors=True)
 
     image = xr.open_zarr(image_path)
-
-    image = image.rename({"dim_0": "y", "dim_1": "x"})
-
     image[image_name].encoding["chunks"] = (image.dims["z"], chunk_size, chunk_size)
     image[image_name].encoding["preferred_chunks"] = {"z": image.dims["z"], "y": chunk_size, "x": chunk_size}
 
@@ -71,9 +68,11 @@ def _rechunk_tiff_zarr(image_path, image_name, chunk_size=5000):
 
 def _tar_dir(dir_paths, tar_path):
     dir_paths = " ".join(map(str, dir_paths))
+    tar_path = pathlib.Path(tar_path)
+    temp_tar_path = tar_path.parent / f"temp_{tar_path.name}"
     try:
         subprocess.run(
-            f"tar -cf {tar_path} --use-compress-program=pigz {dir_paths}",
+            f"tar -cf {temp_tar_path} --use-compress-program=pigz {dir_paths}",
             shell=True,
             check=True,
             capture_output=True,
@@ -86,7 +85,7 @@ def _tar_dir(dir_paths, tar_path):
                 "It will be much faster than gzip."
             )
             subprocess.run(
-                f"tar -cf {tar_path} {dir_paths}",
+                f"tar -cf {temp_tar_path} {dir_paths}",
                 shell=True,
                 check=True,
                 capture_output=True,
@@ -95,6 +94,8 @@ def _tar_dir(dir_paths, tar_path):
             print(e.stdout.decode())
             print(e.stderr.decode())
             raise e
+    # move the temp tar to the final tar
+    shutil.move(str(temp_tar_path), str(tar_path))
     return tar_path
 
 
@@ -209,7 +210,8 @@ class ArchiveMerfishExperiment(MerfishExperimentDirStructureMixin):
     def prepare_archive(self):
         """Prepare the experiment archive."""
         tar_path = self.experiment_dir / f"{self.experiment_name}.tar.gz"
-        _tar_dir([self.raw_dir, self.output_dir], tar_path)
+        if not tar_path.exists():
+            _tar_dir([self.raw_dir, self.output_dir], tar_path)
         print(f"{self.experiment_name}: Archive Raw and Output Data: {tar_path}")
 
         for region_dir in self.region_dirs:
