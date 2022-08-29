@@ -18,7 +18,7 @@ maintainers = [
 urls.Documentation = "https://merfishing.readthedocs.io/"
 urls.Source = "https://github.com/lhqing/merfishing"
 urls.Home-page = "https://github.com/lhqing/merfishing"
-version = "0.2.0"
+version = "0.2.1"
 requires-python = ">=3.8"
 license = { file = "LICENSE" }
 readme = "README.md"
