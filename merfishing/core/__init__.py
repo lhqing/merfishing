@@ -764,6 +764,7 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
         gpu=False,
         redo=False,
         debug=None,
+        channels=None,
     ):
         """
         Run cell segmentation on DAPI and PolyT images.
@@ -788,6 +789,13 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
             Whether to redo the analysis when the cell segmentation results already exist.
         debug :
             If debug is an integer, run only a few FOV and save the temp files.
+        channels :
+            list of channels, either of length 2 or of length number of images by 2.
+            First element of list is the channel to segment (0=grayscale, 1=red, 2=blue, 3=green).
+            Second element of list is the optional nuclear channel (0=none, 1=red, 2=blue, 3=green).
+            For instance, to segment grayscale images, input [0,0]. To segment images with cells
+            in green and nuclei in blue, input [2,3]. To segment one grayscale image and one
+            image with cells in green and nuclei in blue, input [[0,0], [2,3]].
         """
         import time
 
@@ -886,6 +894,7 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
                     pretrained_model_path=pretrained_model_path,
                     output_prefix=output_prefix,
                     verbose=verbose,
+                    channels=channels,
                     diameter=diameter,
                 )
 
