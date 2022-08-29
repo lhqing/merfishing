@@ -866,6 +866,7 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
                         model_type=model_type,
                         pretrained_model_path=pretrained_model_path,
                         output_prefix=output_prefix,
+                        channels=channels,
                         verbose=verbose,
                         diameter=diameter,
                     )

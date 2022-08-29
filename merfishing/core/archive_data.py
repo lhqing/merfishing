@@ -28,10 +28,7 @@ def _tif_to_zarr(tif_path, chunk_size=5000):
         ds.to_zarr(output_path, append_dim="z")
     else:
         ds.to_zarr(output_path)
-
-    # improve zarr chunking
-    _rechunk_tiff_zarr(output_path, name_prefix, chunk_size)
-    return
+    return chunk_size
 
 
 def _rechunk_tiff_zarr(image_path, image_name, chunk_size=5000):
@@ -106,10 +103,10 @@ class ArchiveMerfishRegion(MerfishRegionDirStructureMixin):
         super().__init__(region_dir, verbose=False)
 
         # execute the archive process
-        self.prepare_archive()
+        self.prepare_archive(num_z_slice=7)
         return
 
-    def _convert_tif_to_zarr(self):
+    def _convert_tif_to_zarr(self, num_z_slice=7, chunk_size=5000):
         # turn all image TIF files into zarr files
         p = re.compile(r"\S+_(?P<name>\S+)_z(?P<zorder>\d+).tif")
 
@@ -121,11 +118,21 @@ class ArchiveMerfishRegion(MerfishRegionDirStructureMixin):
             name = name_dict["name"]
             tif_dict[name][zorder] = tif_path
 
+        # check image z-slice numbers
+        for name, zdict in tif_dict.items():
+            assert len(zdict) == num_z_slice, f"{name} has {len(zdict)} z-slice, expected {num_z_slice}"
+
         # save each TIF image as zarr, z-stacks are saved together
-        for _, zdict in tif_dict.items():
-            for _, path in sorted(zdict.items(), key=lambda x: x[0]):
+        for name, zdict in tif_dict.items():
+            name_prefix = f"mosaic_{name}"
+            output_path = self.images_dir / f"{name_prefix}.zarr"
+            for zorder, path in sorted(zdict.items(), key=lambda x: x[0]):
+                print(f'Converting {name} {zorder} z-slice TIFF file to zarr dataset...')
                 _tif_to_zarr(path)
-                path.unlink()  # delete after successful conversion
+                # path.unlink()  # delete after successful conversion
+
+            # improve zarr chunking
+            _rechunk_tiff_zarr(image_path=output_path, image_name=name_prefix, chunk_size=chunk_size)
         return
 
     def _compress_vizgen_output(self):
@@ -177,9 +184,9 @@ class ArchiveMerfishRegion(MerfishRegionDirStructureMixin):
                     hdf[str(fov)] = fov_df
         return
 
-    def prepare_archive(self):
+    def prepare_archive(self, num_z_slice=7):
         """Prepare the region archive."""
-        self._convert_tif_to_zarr()
+        self._convert_tif_to_zarr(num_z_slice=num_z_slice)
         print(f"{self.region_name}: Converted TIF files to Zarr")
 
         self._save_transcripts_to_hdf()
