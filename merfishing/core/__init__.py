@@ -99,7 +99,7 @@ def _cell_segmentation_single_fov(
     padding,
     output_prefix,
     diameter,
-    name="PolyT++DAPI",
+    name=None,
     pretrained_model_path=None,
     model_type=None,
     gpu=False,
@@ -525,7 +525,7 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
         fov_images = {
             name: self.get_image_fov(name=name, fov=fov, projection="max", padding=padding, contrast=True)
             if "+" not in name
-            else self.get_rgb_image(name=name, as_float=True, fov=fov, projection="max", padding=padding, contrast=True)
+            else self.get_rgb_image(name, as_float=True, fov=fov, projection="max", padding=padding, contrast=True)
             for name in image_names
         }
         
@@ -764,7 +764,7 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
         self,
         diameter,
         jobs,
-        name='PolyT++DAPI',
+        name=None,
         model_type=None,
         pretrained_model_path=None,
         padding=100,
