@@ -99,6 +99,7 @@ def _cell_segmentation_single_fov(
     padding,
     output_prefix,
     diameter,
+    name="PolyT++DAPI",
     pretrained_model_path=None,
     model_type=None,
     gpu=False,
@@ -117,7 +118,7 @@ def _cell_segmentation_single_fov(
         print(f"Segmenting cells in {fov}")
 
     merfish = MerfishExperimentRegion(region_dir, verbose=False)
-    _image = merfish.get_rgb_image("PolyT++DAPI", fov=fov, padding=padding, projection=None, use_threads=False)
+    _image = merfish.get_rgb_image(name, fov=fov, padding=padding, projection=None, use_threads=False)
 
     feature_mask, feature_meta = run_cellpose(
         image=_image,
@@ -455,6 +456,7 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
         boundary_kws=None,
         cell_centers_kws=None,
         gene_scatter_kws=None,
+        filter = False,
     ):
         """
         Plot fov PolyT + DAPI and other smFISH images (if exists and provided) with transcript spots overlay.
@@ -526,6 +528,11 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
             else self.get_rgb_image(name=name, as_float=True, fov=fov, projection="max", padding=padding, contrast=True)
             for name in image_names
         }
+        
+        #filter polyT
+        if filter is True:
+            tmp = fov_images['PolyT']
+            tmp[tmp>20000] = 5000
 
         # make plots
         n_images = len(image_names)
@@ -580,7 +587,7 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
             _plot(ax, gene_image, cmap, boundary_kws, cell_centers_kws, gene_scatter_kws)
             ax.set_title(name)
             plot_i += 1
-        return fig
+        return fig, fov_images
 
     # ==========================================================================
     # smFISH analysis, spot detection
@@ -757,6 +764,7 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
         self,
         diameter,
         jobs,
+        name='PolyT++DAPI',
         model_type=None,
         pretrained_model_path=None,
         padding=100,
@@ -779,6 +787,8 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
             Expected diameter of cells to segment.
         jobs :
             Number of jobs to use for cell segmentation.
+        name:
+            RGB name separated by "+"
         padding :
             Padding to add to FOV image borders.
         verbose :
@@ -789,13 +799,13 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
             Whether to redo the analysis when the cell segmentation results already exist.
         debug :
             If debug is an integer, run only a few FOV and save the temp files.
-        channels :
+        channels : list
             list of channels, either of length 2 or of length number of images by 2.
-            First element of list is the channel to segment (0=grayscale, 1=red, 2=blue, 3=green).
-            Second element of list is the optional nuclear channel (0=none, 1=red, 2=blue, 3=green).
+            First element of list is the channel to segment (0=grayscale, 1=red, 2=green, 3=blue).
+            Second element of list is the optional channel (0=none, 1=red, 2=green, 3=blue).
             For instance, to segment grayscale images, input [0,0]. To segment images with cells
-            in green and nuclei in blue, input [2,3]. To segment one grayscale image and one
-            image with cells in green and nuclei in blue, input [[0,0], [2,3]].
+            in red and nuclei in blue, input [1,3]. To segment one grayscale image and one
+            image with cells in red and nuclei in blue, input [[0,0], [1,3]].
         """
         import time
 
@@ -862,6 +872,7 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
                         region_dir=str(self.region_dir),
                         gpu=gpu,
                         fov=fov,
+                        name=name,
                         padding=padding,
                         model_type=model_type,
                         pretrained_model_path=pretrained_model_path,
@@ -889,6 +900,7 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
                     region_dir=str(self.region_dir),
                     gpu=gpu,
                     fov=fov,
+                    name=name,
                     padding=padding,
                     model_type=model_type,
                     pretrained_model_path=pretrained_model_path,
