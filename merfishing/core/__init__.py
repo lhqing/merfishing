@@ -255,7 +255,11 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
 
         # if there are smFISH transcripts, add them to the df
         if smfish and self.smfish_transcripts_path is not None:
-            fish_df = pd.read_hdf(self.smfish_transcripts_path, key=str(fov))
+            try:
+                fish_df = pd.read_hdf(self.smfish_transcripts_path, key=str(fov))
+            except KeyError:
+                raise KeyError(f"FOV {fov} not found in {self.smfish_transcripts_path}, "
+                               "it may be due to the FOV being empty and no MERFISH transcripts detected.")
             # noinspection PyTypeChecker
             df = pd.concat([df, fish_df])
         return df
@@ -264,9 +268,18 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
     def fov_ids(self):
         """Get fov ids."""
         if self._fov_ids is None:
+            # get fov ids from the cell boundary directory
             boundary_paths = list(self.cell_boundary_dir.glob("feature_data_*.hdf5"))
-            self._fov_ids = [pathlib.Path(p).stem.split("_")[-1] for p in boundary_paths]
-            self._fov_ids = sorted(set(self._fov_ids))
+            boundary_fov_ids = [pathlib.Path(p).stem.split("_")[-1] for p in boundary_paths]
+            boundary_fov_ids = set(boundary_fov_ids)
+
+            # get fov ids from the transcript file
+            with pd.HDFStore(self.transcripts_path, mode='r') as hdf:
+                transcripts_fov_ids = set([fov[1:] for fov in hdf.keys()])
+
+            # only keep fov ids that are in both records
+            boundary_fov_ids &= transcripts_fov_ids
+            self._fov_ids = sorted([fov for fov in boundary_fov_ids])
         return self._fov_ids
 
     # ==========================================================================
