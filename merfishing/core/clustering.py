@@ -3,7 +3,6 @@ import scanpy as sc
 from anndata import AnnData
 
 
-
 def qc_before_clustering(
     cell_meta,
     cell_by_gene,
@@ -17,23 +16,37 @@ def qc_before_clustering(
     tanscripts_per_volume_low=0.05,
     tanscripts_per_volume_high=8,
 ):
-    """QC for cells before clustering
+    """
+    QC for cells before clustering.
 
-    Args:
-        cell_meta (str): cell_meta file with fov, volume and spatial coordinates information
-        cell_by_gene (str): cell by gene matrix
-        snmfish_genes (optional): wether to delete smfish gene in cell_by_gene matrix
-        blank_gene_sum_high (int, optional): maximu number of Bank transcripts on ecell can contain,
-        z_number (optional): minimum z stack a cell should be on
-        volume_low (int, optional): minimum cell volume
-        volumn_high (int, optional): maximum cell volume
-        transcript_sum_low (int, optional):  minimum transcripts per cell
-        transcript_sum_high (int, optional): maximum transcripts per cell
-        tanscripts_per_volume_low (float, optional): minimum ratio for transcriptsto cell volume
-        tanscripts_per_volume_high (int, optional): maximum ratio for transcriptsto cell volume
+    Parameters
+    ----------
+    cell_meta :
+        cell_meta file with fov, volume and spatial coordinates information
+    cell_by_gene :
+        cell by gene matrix
+    snmfish_genes :
+        wether to delete smfish gene in cell_by_gene matrix
+    blank_gene_sum_high :
+        maximu number of Bank transcripts on ecell can contain,
+    z_number :
+        minimum z stack a cell should be on
+    volume_low :
+        minimum cell volume
+    volumn_high :
+        maximum cell volume
+    transcript_sum_low :
+        minimum transcripts per cell
+    transcript_sum_high :
+        maximum transcripts per cell
+    tanscripts_per_volume_low :
+        minimum ratio for transcriptsto cell volume
+    tanscripts_per_volume_high :
+        maximum ratio for transcriptsto cell volume
 
-    Returns:
-        cell_by_gene and cell_meta
+    Returns
+    -------
+    cell_by_gene and cell_meta
     """
 
     # filter by blank genes
@@ -48,7 +61,7 @@ def qc_before_clustering(
 
     print(f"{tmp.shape[0]} cells after blank gene QC")
 
-    # filter cells by z_number and cell colume
+    # filter cells by z_number and cell column
     if z_number is not None:
         cell_meta = cell_meta[cell_meta["z"] > z_number]
 
@@ -76,7 +89,7 @@ def qc_before_clustering(
     cell_by_gene["sum"] = cell_by_gene.sum(axis=1)
     cell_by_gene = cell_by_gene[
         (cell_by_gene["sum"] > transcript_sum_low) & (cell_by_gene["sum"] < transcript_sum_high)
-    ]
+        ]
     shared = list(set(cell_meta.index) & set(cell_by_gene.index))
     cell_meta = cell_meta.loc[shared]
     cell_by_gene = cell_by_gene.loc[shared]
@@ -89,7 +102,7 @@ def qc_before_clustering(
 
     cell_by_gene = cell_by_gene[
         (cell_by_gene["t/v"] > tanscripts_per_volume_low) & (cell_by_gene["t/v"] < tanscripts_per_volume_high)
-    ]
+        ]
     shared = list(set(cell_meta.index) & set(cell_by_gene.index))
     cell_meta = cell_meta.loc[shared]
 
@@ -106,18 +119,23 @@ def qc_before_clustering(
 
 
 def get_adata(cell_by_gene, cell_meta, n_neighbors=10, n_pcs=20):
-    """this will generate the adata for clustering
+    """
+    this will generate the adata for clustering
 
-    Args:
-        cell_by_gene: cell by gene matrix
-        cell_meta: cell meta frame
-        n_neighbors: The size of local neighborhood (in terms of number of neighboring data points) used for manifold approximation.
-        Larger values result in more global views of the manifold, while smaller values result in more local data being preserved.
-        In general values should be in the range 2 to 100.
-        n_pcs: Use this many PCs. Defaults to 20.
+    Parameters
+    ----------
+    cell_by_gene :
+        cell by gene matrix
+    cell_meta :
+        cell meta frame
+    n_neighbors :
+        The size of local neighborhood (in terms of number of neighboring data points) used for manifold approximation.
+    n_pcs :
+        Use this many PCs. Defaults to 20.
 
-    Returns:
-        adata
+    Returns
+    -------
+    adata
     """
     assert cell_by_gene.shape[0] == cell_meta.shape[0]
     counts = cell_by_gene.to_numpy()
