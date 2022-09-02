@@ -6,16 +6,17 @@ from typing import Tuple
 
 import numpy as np
 import pandas as pd
-from cellpose import models, utils
 from scipy.sparse import coo_matrix
 from scipy.sparse.csgraph import connected_components
 from sklearn.metrics import pairwise_distances_chunked
+
+from cellpose import models, utils
 
 # Default microscope setting
 MICRON_PER_PIXEL = 0.108
 Z_SLICE_DISTANCE = 1.5
 NUM_Z_SLICES = 7
-VOXEL_VOLUME = MICRON_PER_PIXEL**2 * Z_SLICE_DISTANCE
+VOXEL_VOLUME = MICRON_PER_PIXEL ** 2 * Z_SLICE_DISTANCE
 
 
 def _connect_masks(records, buffer_size=15):
@@ -79,6 +80,7 @@ def _cellpose_plot(image, masks, flows, z=0):
 def _generate_features(mask, buffer_pixel_size) -> Tuple[pd.DataFrame, dict]:
     # single mask records, each mask is at single z plane
     mask_records = []
+    columns = ["z", "center_x", "center_y", "min_x", "min_y", "max_x", "max_y", "volume"]
     for z in range(mask.shape[0]):
         mask_2d = mask[z]
         for mask_id in range(1, mask_2d.max() + 1):
@@ -96,26 +98,29 @@ def _generate_features(mask, buffer_pixel_size) -> Tuple[pd.DataFrame, dict]:
                     "volume": bool_mask.sum() * VOXEL_VOLUME,
                 },
                 name=f"{z}_{mask_id}",
-            )
+            ).loc[columns]
             mask_records.append(record)
-    mask_records = pd.DataFrame(mask_records)
+    mask_records = pd.DataFrame(mask_records, columns=columns)
 
     # merge close mask to features
-    mask_records["feature_id"] = _connect_masks(mask_records, buffer_size=buffer_pixel_size)
-    feature_records = mask_records.groupby("feature_id").agg(
-        {
-            "center_x": "mean",
-            "center_y": "mean",
-            "min_x": "min",
-            "min_y": "min",
-            "max_x": "max",
-            "max_y": "max",
-            "volume": "sum",
-            "z": lambda i: i.unique().size,
-        }
-    )
-
-    mask_to_feature_map = mask_records["feature_id"].to_dict()
+    if mask_records.shape[0] > 1:
+        mask_records["feature_id"] = _connect_masks(mask_records, buffer_size=buffer_pixel_size)
+        feature_records = mask_records.groupby("feature_id").agg(
+            {
+                "center_x": "mean",
+                "center_y": "mean",
+                "min_x": "min",
+                "min_y": "min",
+                "max_x": "max",
+                "max_y": "max",
+                "volume": "sum",
+                "z": lambda i: i.unique().size,
+            }
+        )
+        mask_to_feature_map = mask_records["feature_id"].to_dict()
+    else:
+        feature_records = pd.DataFrame([], columns=columns)
+        mask_to_feature_map = {}
     return feature_records, mask_to_feature_map
 
 
