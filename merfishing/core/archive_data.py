@@ -127,7 +127,7 @@ class ArchiveMerfishRegion(MerfishRegionDirStructureMixin):
             name_prefix = f"mosaic_{name}"
             output_path = self.images_dir / f"{name_prefix}.zarr"
             for zorder, path in sorted(zdict.items(), key=lambda x: x[0]):
-                print(f'Converting {name} {zorder} z-slice TIFF file to zarr dataset...')
+                print(f"Converting {name} {zorder} z-slice TIFF file to zarr dataset...")
                 _tif_to_zarr(path)
                 # path.unlink()  # delete after successful conversion
 

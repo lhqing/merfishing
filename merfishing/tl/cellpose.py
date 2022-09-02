@@ -6,17 +6,16 @@ from typing import Tuple
 
 import numpy as np
 import pandas as pd
+from cellpose import models, utils
 from scipy.sparse import coo_matrix
 from scipy.sparse.csgraph import connected_components
 from sklearn.metrics import pairwise_distances_chunked
-
-from cellpose import models, utils
 
 # Default microscope setting
 MICRON_PER_PIXEL = 0.108
 Z_SLICE_DISTANCE = 1.5
 NUM_Z_SLICES = 7
-VOXEL_VOLUME = MICRON_PER_PIXEL ** 2 * Z_SLICE_DISTANCE
+VOXEL_VOLUME = MICRON_PER_PIXEL**2 * Z_SLICE_DISTANCE
 
 
 def _connect_masks(records, buffer_size=15):
@@ -120,6 +119,7 @@ def _generate_features(mask, buffer_pixel_size) -> Tuple[pd.DataFrame, dict]:
         mask_to_feature_map = mask_records["feature_id"].to_dict()
     else:
         feature_records = pd.DataFrame([], columns=columns)
+        feature_records.loc[0] = 0
         mask_to_feature_map = {}
     return feature_records, mask_to_feature_map
 
@@ -162,11 +162,11 @@ def run_cellpose(
         A bool variable indicates whether to use GPU
     channels : list
         list of channels, either of length 2 or of length number of images by 2.
-        First element of list is the channel to segment (0=grayscale, 1=red, 2=blue, 3=green).
-        Second element of list is the optional nuclear channel (0=none, 1=red, 2=blue, 3=green).
+        First element of list is the channel to segment (0=grayscale, 1=red, 2=green, 3=blue).
+        Second element of list is the optional channel (0=none, 1=red, 2=green, 3=blue).
         For instance, to segment grayscale images, input [0,0]. To segment images with cells
-        in green and nuclei in blue, input [2,3]. To segment one grayscale image and one
-        image with cells in green and nuclei in blue, input [[0,0], [2,3]].
+        in red and nuclei in blue, input [1,3]. To segment one grayscale image and one
+        image with cells in red and nuclei in blue, input [[0,0], [1,3]].
     channel_axis : int
         The channel axis of the input images.
     z_axis : int

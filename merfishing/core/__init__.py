@@ -99,6 +99,7 @@ def _cell_segmentation_single_fov(
     padding,
     output_prefix,
     diameter,
+    name,
     pretrained_model_path=None,
     model_type=None,
     gpu=False,
@@ -117,7 +118,7 @@ def _cell_segmentation_single_fov(
         print(f"Segmenting cells in {fov}")
 
     merfish = MerfishExperimentRegion(region_dir, verbose=False)
-    _image = merfish.get_rgb_image("PolyT++DAPI", fov=fov, padding=padding, projection=None, use_threads=False)
+    _image = merfish.get_rgb_image(name, fov=fov, padding=padding, projection=None, use_threads=False)
 
     feature_mask, feature_meta = run_cellpose(
         image=_image,
@@ -258,8 +259,10 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
             try:
                 fish_df = pd.read_hdf(self.smfish_transcripts_path, key=str(fov))
             except KeyError:
-                raise KeyError(f"FOV {fov} not found in {self.smfish_transcripts_path}, "
-                               "it may be due to the FOV being empty and no MERFISH transcripts detected.")
+                raise KeyError(
+                    f"FOV {fov} not found in {self.smfish_transcripts_path}, "
+                    "it may be due to the FOV being empty and no MERFISH transcripts detected."
+                )
             # noinspection PyTypeChecker
             df = pd.concat([df, fish_df])
         return df
@@ -274,12 +277,12 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
             boundary_fov_ids = set(boundary_fov_ids)
 
             # get fov ids from the transcript file
-            with pd.HDFStore(self.transcripts_path, mode='r') as hdf:
-                transcripts_fov_ids = set([fov[1:] for fov in hdf.keys()])
+            with pd.HDFStore(self.transcripts_path, mode="r") as hdf:
+                transcripts_fov_ids = {fov[1:] for fov in hdf.keys()}
 
             # only keep fov ids that are in both records
             boundary_fov_ids &= transcripts_fov_ids
-            self._fov_ids = sorted([fov for fov in boundary_fov_ids])
+            self._fov_ids = sorted(fov for fov in boundary_fov_ids)
         return self._fov_ids
 
     # ==========================================================================
@@ -468,6 +471,7 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
         boundary_kws=None,
         cell_centers_kws=None,
         gene_scatter_kws=None,
+        filter=False,
     ):
         """
         Plot fov PolyT + DAPI and other smFISH images (if exists and provided) with transcript spots overlay.
@@ -536,9 +540,14 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
         fov_images = {
             name: self.get_image_fov(name=name, fov=fov, projection="max", padding=padding, contrast=True)
             if "+" not in name
-            else self.get_rgb_image(name=name, as_float=True, fov=fov, projection="max", padding=padding, contrast=True)
+            else self.get_rgb_image(name, as_float=True, fov=fov, projection="max", padding=padding, contrast=True)
             for name in image_names
         }
+
+        # filter polyT
+        if filter is True:
+            tmp = fov_images["PolyT"]
+            tmp[tmp > 20000] = 5000
 
         # make plots
         n_images = len(image_names)
@@ -593,7 +602,7 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
             _plot(ax, gene_image, cmap, boundary_kws, cell_centers_kws, gene_scatter_kws)
             ax.set_title(name)
             plot_i += 1
-        return fig
+        return fig, fov_images
 
     # ==========================================================================
     # smFISH analysis, spot detection
@@ -770,6 +779,7 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
         self,
         diameter,
         jobs,
+        name="PolyT++DAPI",
         model_type=None,
         pretrained_model_path=None,
         padding=100,
@@ -792,6 +802,8 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
             Expected diameter of cells to segment.
         jobs :
             Number of jobs to use for cell segmentation.
+        name:
+            RGB name separated by "+"
         padding :
             Padding to add to FOV image borders.
         verbose :
@@ -802,13 +814,13 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
             Whether to redo the analysis when the cell segmentation results already exist.
         debug :
             If debug is an integer, run only a few FOV and save the temp files.
-        channels :
+        channels : list
             list of channels, either of length 2 or of length number of images by 2.
-            First element of list is the channel to segment (0=grayscale, 1=red, 2=blue, 3=green).
-            Second element of list is the optional nuclear channel (0=none, 1=red, 2=blue, 3=green).
+            First element of list is the channel to segment (0=grayscale, 1=red, 2=green, 3=blue).
+            Second element of list is the optional channel (0=none, 1=red, 2=green, 3=blue).
             For instance, to segment grayscale images, input [0,0]. To segment images with cells
-            in green and nuclei in blue, input [2,3]. To segment one grayscale image and one
-            image with cells in green and nuclei in blue, input [[0,0], [2,3]].
+            in red and nuclei in blue, input [1,3]. To segment one grayscale image and one
+            image with cells in red and nuclei in blue, input [[0,0], [1,3]].
         """
         import time
 
@@ -875,6 +887,7 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
                         region_dir=str(self.region_dir),
                         gpu=gpu,
                         fov=fov,
+                        name=name,
                         padding=padding,
                         model_type=model_type,
                         pretrained_model_path=pretrained_model_path,
@@ -903,6 +916,7 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
                     region_dir=str(self.region_dir),
                     gpu=gpu,
                     fov=fov,
+                    name=name,
                     padding=padding,
                     model_type=model_type,
                     pretrained_model_path=pretrained_model_path,
