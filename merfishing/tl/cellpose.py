@@ -6,17 +6,16 @@ from typing import Tuple
 
 import numpy as np
 import pandas as pd
+from cellpose import models, utils
 from scipy.sparse import coo_matrix
 from scipy.sparse.csgraph import connected_components
 from sklearn.metrics import pairwise_distances_chunked
-
-from cellpose import models, utils
 
 # Default microscope setting
 MICRON_PER_PIXEL = 0.108
 Z_SLICE_DISTANCE = 1.5
 NUM_Z_SLICES = 7
-VOXEL_VOLUME = MICRON_PER_PIXEL ** 2 * Z_SLICE_DISTANCE
+VOXEL_VOLUME = MICRON_PER_PIXEL**2 * Z_SLICE_DISTANCE
 
 
 def _connect_masks(records, buffer_size=15):

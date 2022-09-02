@@ -259,8 +259,10 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
             try:
                 fish_df = pd.read_hdf(self.smfish_transcripts_path, key=str(fov))
             except KeyError:
-                raise KeyError(f"FOV {fov} not found in {self.smfish_transcripts_path}, "
-                               "it may be due to the FOV being empty and no MERFISH transcripts detected.")
+                raise KeyError(
+                    f"FOV {fov} not found in {self.smfish_transcripts_path}, "
+                    "it may be due to the FOV being empty and no MERFISH transcripts detected."
+                )
             # noinspection PyTypeChecker
             df = pd.concat([df, fish_df])
         return df
@@ -275,12 +277,12 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
             boundary_fov_ids = set(boundary_fov_ids)
 
             # get fov ids from the transcript file
-            with pd.HDFStore(self.transcripts_path, mode='r') as hdf:
-                transcripts_fov_ids = set([fov[1:] for fov in hdf.keys()])
+            with pd.HDFStore(self.transcripts_path, mode="r") as hdf:
+                transcripts_fov_ids = {fov[1:] for fov in hdf.keys()}
 
             # only keep fov ids that are in both records
             boundary_fov_ids &= transcripts_fov_ids
-            self._fov_ids = sorted([fov for fov in boundary_fov_ids])
+            self._fov_ids = sorted(fov for fov in boundary_fov_ids)
         return self._fov_ids
 
     # ==========================================================================
@@ -469,7 +471,7 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
         boundary_kws=None,
         cell_centers_kws=None,
         gene_scatter_kws=None,
-        filter = False,
+        filter=False,
     ):
         """
         Plot fov PolyT + DAPI and other smFISH images (if exists and provided) with transcript spots overlay.
@@ -541,11 +543,11 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
             else self.get_rgb_image(name, as_float=True, fov=fov, projection="max", padding=padding, contrast=True)
             for name in image_names
         }
-        
-        #filter polyT
+
+        # filter polyT
         if filter is True:
-            tmp = fov_images['PolyT']
-            tmp[tmp>20000] = 5000
+            tmp = fov_images["PolyT"]
+            tmp[tmp > 20000] = 5000
 
         # make plots
         n_images = len(image_names)
