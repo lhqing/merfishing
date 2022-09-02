@@ -120,6 +120,7 @@ def _generate_features(mask, buffer_pixel_size) -> Tuple[pd.DataFrame, dict]:
         mask_to_feature_map = mask_records["feature_id"].to_dict()
     else:
         feature_records = pd.DataFrame([], columns=columns)
+        feature_records.loc[0] = 0
         mask_to_feature_map = {}
     return feature_records, mask_to_feature_map
 
