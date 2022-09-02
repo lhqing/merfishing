@@ -89,7 +89,7 @@ def qc_before_clustering(
     cell_by_gene["sum"] = cell_by_gene.sum(axis=1)
     cell_by_gene = cell_by_gene[
         (cell_by_gene["sum"] > transcript_sum_low) & (cell_by_gene["sum"] < transcript_sum_high)
-        ]
+    ]
     shared = list(set(cell_meta.index) & set(cell_by_gene.index))
     cell_meta = cell_meta.loc[shared]
     cell_by_gene = cell_by_gene.loc[shared]
@@ -102,7 +102,7 @@ def qc_before_clustering(
 
     cell_by_gene = cell_by_gene[
         (cell_by_gene["t/v"] > tanscripts_per_volume_low) & (cell_by_gene["t/v"] < tanscripts_per_volume_high)
-        ]
+    ]
     shared = list(set(cell_meta.index) & set(cell_by_gene.index))
     cell_meta = cell_meta.loc[shared]
 
