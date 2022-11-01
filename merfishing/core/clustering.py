@@ -1,57 +1,54 @@
-import pandas as pd
-import scanpy as sc
-from anndata import AnnData
 import matplotlib.pyplot as plt
+import pandas as pd
 import seaborn as sns
+from anndata import AnnData
+
 
 def _get_qc_info(cell_by_gene, cell_meta):
-    tmp= cell_by_gene.copy()
+    tmp = cell_by_gene.copy()
     tmp = tmp > 0
     tmp = tmp.astype(int)
-    tmp.sum(axis = 1).sort_values()
+    tmp.sum(axis=1).sort_values()
 
-    qc_info = pd.DataFrame({
-        'nCount_RNA':cell_by_gene.sum(axis = 1),
-        'nFeature_RNA':tmp.sum(axis = 1)
-    })
+    qc_info = pd.DataFrame({"nCount_RNA": cell_by_gene.sum(axis=1), "nFeature_RNA": tmp.sum(axis=1)})
 
-    qc_info['volume'] = cell_meta['volume']
-    qc_info['nCount_RNA/volume'] = round(qc_info['nCount_RNA'] / qc_info['volume'],2)
+    qc_info["volume"] = cell_meta["volume"]
+    qc_info["nCount_RNA/volume"] = round(qc_info["nCount_RNA"] / qc_info["volume"], 2)
 
     blank_genes = []
     for gene in cell_by_gene.columns:
-        if gene.startswith('Blank') == True:
+        if gene.startswith("Blank") == True:
             blank_genes.append(gene)
 
-    qc_info['nBlank_Gene'] = cell_by_gene[blank_genes].sum(axis = 1)
-    
+    qc_info["nBlank_Gene"] = cell_by_gene[blank_genes].sum(axis=1)
+
     return qc_info
 
+
 def plot_qc_feature(cell_by_gene, cell_meta):
-    
+
     qc_info = _get_qc_info(cell_by_gene, cell_meta)
-    
-    fig, axes = plt.subplots(figsize = (15,3), dpi = 200, ncols = 5, constrained_layout = True)
+
+    fig, axes = plt.subplots(figsize=(15, 3), dpi=200, ncols=5, constrained_layout=True)
     ax = axes[0]
-    sns.violinplot(y =qc_info['nCount_RNA'] , ax = ax)
-    ax.set(title = 'nCount_RNA')
+    sns.violinplot(y=qc_info["nCount_RNA"], ax=ax)
+    ax.set(title="nCount_RNA")
 
     ax = axes[1]
-    sns.violinplot(y =qc_info['nFeature_RNA'] , ax = ax)
-    ax.set(title = 'nFeature_RNA')
+    sns.violinplot(y=qc_info["nFeature_RNA"], ax=ax)
+    ax.set(title="nFeature_RNA")
 
     ax = axes[2]
-    sns.violinplot(y =qc_info['volume'] , ax = ax)
-    ax.set(title = 'volume')
+    sns.violinplot(y=qc_info["volume"], ax=ax)
+    ax.set(title="volume")
 
     ax = axes[3]
-    sns.violinplot(y =qc_info['nCount_RNA/volume'] , ax = ax)
-    ax.set(title = 'nCount_RNA/volume')
+    sns.violinplot(y=qc_info["nCount_RNA/volume"], ax=ax)
+    ax.set(title="nCount_RNA/volume")
 
     ax = axes[4]
-    sns.violinplot(y =qc_info['nBlank_Gene'] , ax = ax)
-    ax.set(title = 'nBlank_Gene')
-
+    sns.violinplot(y=qc_info["nBlank_Gene"], ax=ax)
+    ax.set(title="nBlank_Gene")
 
 
 def qc_before_clustering(
@@ -187,7 +184,7 @@ def generate_adata(cell_by_gene, cell_meta):
     assert cell_by_gene.shape[0] == cell_meta.shape[0]
     cell_by_gene = cell_by_gene.sort_index()
     cell_meta = cell_meta.sort_index()
-    
+
     counts = cell_by_gene.to_numpy()
     coordinates = cell_meta[["center_x", "center_y"]].to_numpy()
     adata = AnnData(
@@ -197,5 +194,5 @@ def generate_adata(cell_by_gene, cell_meta):
         var=pd.DataFrame([], index=cell_by_gene.columns),
         obsm={"spatial": coordinates},
     )
-    
+
     return adata
