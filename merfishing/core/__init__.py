@@ -538,9 +538,11 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
 
         # load gray image data
         fov_images = {
-            name: self.get_image_fov(name=name, fov=fov, projection="max", padding=padding, contrast=True)
-            if "+" not in name
-            else self.get_rgb_image(name, as_float=True, fov=fov, projection="max", padding=padding, contrast=True)
+            name: (
+                self.get_image_fov(name=name, fov=fov, projection="max", padding=padding, contrast=True)
+                if "+" not in name
+                else self.get_rgb_image(name, as_float=True, fov=fov, projection="max", padding=padding, contrast=True)
+            )
             for name in image_names
         }
 
@@ -862,20 +864,20 @@ class MerfishExperimentRegion(MerfishRegionDirStructureMixin):
         temp_dir.mkdir(exist_ok=True)
 
         output_prefix_list = []
-        
+
         if debug is not None:
             try:
                 debug = int(debug)
             except ValueError:
                 print("Debug need to be None or an integer.")
-            transcript_df = pd.read_csv(f'{self.region_dir}/detected_transcripts.csv.gz')
-            fov_list = list(transcript_df['fov'].unique())
+            transcript_df = pd.read_csv(f"{self.region_dir}/detected_transcripts.csv.gz")
+            fov_list = list(transcript_df["fov"].unique())
             fov_list = fov_list[:debug]
-            #fov_list = self.fov_ids[:debug]
+            # fov_list = self.fov_ids[:debug]
         else:
-            transcript_df = pd.read_csv(f'{self.region_dir}/detected_transcripts.csv.gz')
-            fov_list = list(transcript_df['fov'].unique())
-            #fov_list = self.fov_ids
+            transcript_df = pd.read_csv(f"{self.region_dir}/detected_transcripts.csv.gz")
+            fov_list = list(transcript_df["fov"].unique())
+            # fov_list = self.fov_ids
 
         if gpu is False:
             with ProcessPoolExecutor(jobs) as executor:
